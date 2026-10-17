@@ -4,7 +4,7 @@
 
 class Denuncia {
   var property position
-  var property image = "Denuncia.png"
+  var property image = "assets/img/Denuncia.png"
 
   method volar() {
     // Se desplaza hacia arriba en el eje Y
@@ -25,8 +25,8 @@ class Denuncia {
 }
 
 object detective {
-  var property position = game.at(10, 5)
-  var property image = "detective.png"
+  var property position = game.at(15, 3)
+  var property image = "assets/img/Detective.png"
   var property vidas = 3
   var property danio = 1
 
@@ -57,7 +57,7 @@ object detective {
 
 class Chori {
   var property position
-  var property image = "chori.png"
+  var property image = "assets/img/Chori.png"
 
   method volar() {
     // Se desplaza hacia abajo en el eje Y
@@ -79,8 +79,8 @@ class Chori {
 
 
 object chiqui {
-  var property position = game.at(0, 9) // Nace arriba del todo
-  var property image = "chiqui.png"
+  var property position = game.at(15, 15) // Nace arriba del todo
+  var property image = "assets/img/Chiqui.png"
   var direccionX = 1 // 1 para ir a la derecha, -1 para ir a la izquierda
   var property vida = 10
 
