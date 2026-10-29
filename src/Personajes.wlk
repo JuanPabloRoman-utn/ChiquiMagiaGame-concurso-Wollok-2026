@@ -1,121 +1,82 @@
+import wollok.game.*
 
+// El detective (jugador), Lucho. Es pasivo: el director maneja su movimiento.
+object jugador {
+  var property position = game.at(10, 6)
+  var property image = "img/LuchoFrente.png"
+  var property vidas = 2
+  var property pruebas = 0   // inventario: pruebas conseguidas (minijuegos completados)
 
+  // Cambia el sprite según la dirección: de espaldas cuando sube, de frente si no.
+  method mirar(haciaArriba) {
+    if (haciaArriba) { image = "img/LuchoEspaldas.png" }
+    else { image = "img/LuchoFrente.png" }
+  }
+}
 
+// Toviggino: está de espaldas y se da vuelta cada tanto (rápido, casi sin aviso).
+object toviggino {
+  var property position = game.at(10, 10)
+  var property image = "img/TovigginoEspaldas.png"
+  var mirando = false
+  var ticks = 8
 
-class Denuncia {
+  method estaMirando() = mirando
+
+  method reset() {
+    mirando = false
+    image = "img/TovigginoEspaldas.png"
+    ticks = (6 .. 12).anyOne()
+  }
+
+  // Se llama por tick: cuenta y, cuando llega a 0, se da vuelta.
+  method pensar() {
+    ticks = ticks - 1
+    if (ticks <= 0) {
+      self.girar()
+    }
+  }
+
+  method girar() {
+    mirando = not mirando
+    if (mirando) {
+      image = "img/TovigginoFrente.png"
+      ticks = (3 .. 6).anyOne()      // mirando: poco tiempo
+    } else {
+      image = "img/TovigginoEspaldas.png"
+      ticks = (6 .. 13).anyOne()     // de espaldas: un poco más
+    }
+  }
+}
+
+// Una prueba (carpeta de evidencia) sobre el escritorio.
+class Prueba {
   var property position
-  var property image = "assets/img/Denuncia.png"
+  var property image = "img/Prueba.png"
+}
 
-  method volar() {
-    // Se desplaza hacia arriba en el eje Y
-    position = position.up(1)
+// Aliado Caruso: está preso en su sala; al llegar a él (resolviendo el camino) te da una prueba.
+object aliadoCaruso {
+  var property position = game.at(10, 10)
+  var property image = "img/Caruso.png"
+}
 
-    // Si sale por la parte superior del mapa, desaparece
-    if (position.y() < 0) {
-      self.desaparecer()
-    }
-  }
+// Archivero (cajón): se revisa al pararte encima. Adentro puede haber un expediente.
+class Archivero {
+  const property position
+  var property image = "img/Archivero.png"
+  var guardaExpediente = false
+  var property revisado = false
 
-  method desaparecer() {
-    game.removeTickEvent("moverDenuncia_" + self.identity())
-    if (game.hasVisual(self)) {
-      game.removeVisual(self)
+  method ponerExpediente() { guardaExpediente = true }
+  method tieneExpediente() = guardaExpediente
+
+  method revisar() {
+    revisado = true
+    if (guardaExpediente) {
+      image = "img/ArchiveroExpediente.png"
+    } else {
+      image = "img/ArchiveroVacio.png"
     }
   }
 }
-
-object detective {
-  var property position = game.at(15, 3)
-  var property image = "assets/img/Detective.png"
-  var property vidas = 3
-  var property danio = 1
-
-  // Movimiento con límites de pantalla
-  method moverA(nuevaPosicion) {
-    if (nuevaPosicion.x().between(0, game.width() - 1) and 
-        nuevaPosicion.y().between(0, game.height() - 1)) {
-      position = nuevaPosicion
-    }
-  }
-
-  method recibirDanio() {
-    vidas = vidas - 1
-    game.say(self, "¡Ouch! Me quedan " + vidas.toString() + " vidas")
-    
-    if (vidas <= 0) {
-      game.say(self, "¡Game Over!")
-      game.stop()
-    }
-  }
-
-  method revolear() {
-    // Nace justo debajo del detective en su coordenada X actual
-    const denuncia = new Denuncia(position = position.up(1))
-  }
-
-}
-
-class Chori {
-  var property position
-  var property image = "assets/img/Chori.png"
-
-  method volar() {
-    // Se desplaza hacia abajo en el eje Y
-    position = position.down(1)
-
-    // Si sale por la parte inferior del mapa, desaparece
-    if (position.y() < 0) {
-      self.desaparecer()
-    }
-  }
-
-  method desaparecer() {
-    game.removeTickEvent("moverChori_" + self.identity())
-    if (game.hasVisual(self)) {
-      game.removeVisual(self)
-    }
-  }
-}
-
-
-object chiqui {
-  var property position = game.at(15, 15) // Nace arriba del todo
-  var property image = "assets/img/Chiqui.png"
-  var direccionX = 1 // 1 para ir a la derecha, -1 para ir a la izquierda
-  var property vida = 10
-
-  method mover() {
-    // Si llega al borde derecho o izquierdo, invierte el sentido
-    if (position.x() >= game.width() - 1) {
-      direccionX = -1
-    } else if (position.x() <= 0) {
-      direccionX = 1
-    }
-
-    position = position.right(direccionX)
-  }
-
-  method recibirDanio() {
-    vida = vida - 1
-    
-    if (vida <= 0) {
-      game.say(self, "Cayó preso gordito")
-      game.stop()
-    }
-  }
-
-  method revolear() {
-    // Nace justo debajo del Chiqui en su coordenada X actual
-    const chori = new Chori(position = position.down(1))
-
-    game.addVisual(chori)
-
-    // El chori avanza hacia abajo cada 100 ms
-    game.onTick(100, "moverChori_" + chori.identity(), {
-      chori.volar()
-    })
-  }
-}
-
-// el polimorfismo lo aplicamos con el metodo revolear, donde los dos personajes actuan de manera distinta con la clase que lanzan,
-// y dependiendo de cual sea esta actuan de manera distinta

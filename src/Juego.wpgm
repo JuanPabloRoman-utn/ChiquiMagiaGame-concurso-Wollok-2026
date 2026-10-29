@@ -1,44 +1,32 @@
-
 import wollok.game.*
 import Personajes.*
+import Mundo.*
 
 program juego {
-  
-  game.boardGround("assets/img/FondoAFA.jpg")
-  game.title("Chiqui vs Detective")
-  game.height(20)
-  game.width(30)
+  game.title("Chiqui Mafia Game")
+  game.cellSize(64)
+  game.width(20)
+  game.height(12)
 
-  game.addVisual(chiqui)
-  game.addVisual(detective)
+  // Arranca en el menú principal. ENTER avanza (menú -> patio, cartel -> hall).
+  director.mostrarMenu()
+  keyboard.enter().onPressDo({ director.confirmar() })
 
-  // --- CONTROLES WASD ---
-  keyboard.w().onPressDo({ detective.moverA(detective.position().up(1)) })
-  keyboard.s().onPressDo({ detective.moverA(detective.position().down(1)) })
-  keyboard.a().onPressDo({ detective.moverA(detective.position().left(1)) })
-  keyboard.d().onPressDo({ detective.moverA(detective.position().right(1)) })
+  // Movimiento casilla por casilla (WASD). El director maneja todo.
+  keyboard.w().onPressDo({ jugador.mirar(true)  director.moverJugador({ pos => pos.up(1) }) })
+  keyboard.s().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.down(1) }) })
+  keyboard.a().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.left(1) }) })
+  keyboard.d().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.right(1) }) })
 
-  // --- ATAQUE AUTOMÁTICO ---
-  // El Chiqui intenta pegarle al detective cada 2000 ms (2 segundos)
-  game.onTick(2000, "ataqueChiqui", {
-    chiqui.revolear()
-  })
+  // --- Teclas de modo test (solo sirven si config.debug = true) ---
+  // T/B/C: saltar directo a Toviggino / Beligoy / Caruso. U: completar todo y volver al hall.
+  keyboard.t().onPressDo({ director.saltarA(salaToviggino) })
+  keyboard.b().onPressDo({ director.saltarA(salaBeligoy) })
+  keyboard.c().onPressDo({ director.saltarA(salaCaruso) })
+  keyboard.u().onPressDo({ director.completarTodo() })
 
-  game.onTick(2000, "ataqueDetective", {
-    detective.revolear()
-  })
-
-
-  // --- COLISIÓN ---
-  game.onCollideDo(detective, { elemento =>
-    elemento.desaparecer()
-    detective.recibirDanio()
-  })
-
-  game.onCollideDo(chiqui, { elemento =>
-    elemento.desaparecer()
-    chiqui.recibirDanio()
-  })
+  // Indicadores (flechas verdes) titilando.
+  game.onTick(450, "titilar", { director.titilar() })
 
   game.start()
 }

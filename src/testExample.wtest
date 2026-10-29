@@ -1,0 +1,156 @@
+import wollok.game.*
+import Mundo.*
+import Personajes.*
+
+describe "vidas y game over" {
+
+  method initialize(){
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+  }
+
+  test "perder una vida con vidas restantes te devuelve a la sala principal" {
+    director.irA(salaToviggino)
+    director.perderVida()
+    assert.equals(1, jugador.vidas())
+    assert.equals(salaPrincipal, director.salaActual())
+  }
+
+  test "perder la ultima vida reinicia el juego"{
+    minijuegoToviggino.completado(true)
+    minijuegoCaruso.completado(true)
+    minijuegoBeligoy.completado(true)
+    jugador.pruebas(2)
+    jugador.vidas(1)
+    director.perderVida()
+    assert.equals(0, jugador.pruebas())
+    assert.equals(2, jugador.vidas())
+    assert.notThat(minijuegoToviggino.completado())
+    assert.notThat(minijuegoBeligoy.completado())
+    assert.notThat(minijuegoCaruso.completado())
+    
+  }
+}
+
+describe "minijuego Toviggino" {
+
+  method initialize(){
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaToviggino)
+  }
+
+  test "juntar las pruebas y salir completa el juego" {
+    minijuegoToviggino.jugadorSeMovio(game.at(7,9))
+    minijuegoToviggino.jugadorSeMovio(game.at(10,9))
+    minijuegoToviggino.jugadorSeMovio(game.at(13,9))
+    minijuegoToviggino.jugadorSeMovio(game.at(10,1))
+    assert.that(minijuegoToviggino.completado())
+    assert.equals(1, jugador.pruebas())
+    assert.equals(salaCaruso, director.salaActual())
+  }
+
+  test "salir a la sala principal sin las tres pruebas no suma nada" {
+    minijuegoToviggino.jugadorSeMovio(game.at(10,1))
+    assert.notThat(minijuegoToviggino.completado())
+    assert.equals(0, jugador.pruebas())
+    assert.equals(salaPrincipal, director.salaActual())
+  }
+
+  test "moverse mientras Toviggino esta mirando hace perder una vida" {
+    toviggino.girar()
+    minijuegoToviggino.jugadorSeMovio(game.at(10,3))
+    assert.equals(1, jugador.vidas())
+  }
+
+  test "no escapar antes de tiempo hace perder una vida" {
+    minijuegoToviggino.jugadorSeMovio(game.at(7,9))
+    minijuegoToviggino.jugadorSeMovio(game.at(10,9))
+    minijuegoToviggino.jugadorSeMovio(game.at(13,9))
+    (1..11).forEach({seg => minijuegoToviggino.tick() })
+    assert.equals(2, jugador.vidas())
+    minijuegoToviggino.tick()
+    assert.equals(1, jugador.vidas())
+  }
+}
+
+describe "minijuego Beligoy" {
+
+  method initialize() {
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaBeligoy)
+  }
+
+  test "encontrar los 3 expedientes arreglados completa el minijuego y suma prueba" {
+    // Simulamos movimiento sobre las posiciones donde se crearon los qarchiveros con expedientes
+    minijuegoBeligoy.jugadorSeMovio(game.at(5, 8))
+    minijuegoBeligoy.jugadorSeMovio(game.at(10, 8))
+    minijuegoBeligoy.jugadorSeMovio(game.at(15, 8))
+    
+    // Si la pista dio abajo, probamos sobre la fila 3
+    if (not minijuegoBeligoy.completado()) {
+      minijuegoBeligoy.jugadorSeMovio(game.at(5, 3))
+      minijuegoBeligoy.jugadorSeMovio(game.at(10, 3))
+      minijuegoBeligoy.jugadorSeMovio(game.at(15, 3))
+    }
+
+    assert.that(minijuegoBeligoy.completado())
+    assert.equals(1, jugador.pruebas())
+    assert.equals(salaPrincipal, director.salaActual())
+  }
+
+  test "revisar un archivero limpio descuenta tiempo" {
+    // Pisamos un archivero que no es el correcto para descontar 5s
+    // Si la pista asignó la fila 8, la fila 3 es la trampa (o viceversa)
+    minijuegoBeligoy.jugadorSeMovio(game.at(5, 3))
+    minijuegoBeligoy.jugadorSeMovio(game.at(5, 8))
+    
+    // Al al menos uno ser trampa, revisamos que no afecte las vidas inmediatamente pero sí altere el flujo
+    assert.equals(2, jugador.vidas())
+  }
+
+  test "quedarse sin tiempo en Beligoy hace perder una vida" {
+    (1..30).forEach({ seg => minijuegoBeligoy.tick() })
+    assert.equals(1, jugador.vidas())
+    assert.equals(salaPrincipal, director.salaActual())
+  }
+}
+
+describe "minijuego Caruso" {
+
+  method initialize() {
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaCaruso)
+  }
+
+  test "pisar fuera del camino reinicia la posicion del jugador" {
+    // (1,1) es la posicion inicial, (1,3) no pertenece al patron
+    minijuegoCaruso.jugadorSeMovio(game.at(1, 3))
+    assert.equals(game.at(1, 1), jugador.position())
+  }
+
+  test "llegar hasta la celda de Caruso libera a Caruso, suma prueba y completa el juego" {
+    // Seguimos todo el patron escalera hasta la celda (10,10)
+    var x = 1
+    var y = 1
+    (1 .. 9).forEach({ i =>
+      y = y + 1
+      minijuegoCaruso.jugadorSeMovio(game.at(x, y))
+      x = x + 1
+      minijuegoCaruso.jugadorSeMovio(game.at(x, y))
+    })
+    
+    // Al pisar la celda (10,10)
+    minijuegoCaruso.jugadorSeMovio(game.at(10, 10))
+
+    assert.that(minijuegoCaruso.completado())
+    assert.equals(1, jugador.pruebas())
+    assert.equals(salaPrincipal, director.salaActual())
+  }
+}
