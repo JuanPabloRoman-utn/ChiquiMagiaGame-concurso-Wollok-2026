@@ -1,6 +1,6 @@
 import wollok.game.*
 import Personajes.*
-import Mundo.*
+import Salas.*
 
 program juego {
   game.title("Chiqui Mafia Game")

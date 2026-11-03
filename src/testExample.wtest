@@ -1,5 +1,6 @@
 import wollok.game.*
-import Mundo.*
+import Salas.*
+import Minijuegos.*
 import Personajes.*
 
 describe "vidas y game over" {
