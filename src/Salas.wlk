@@ -54,6 +54,13 @@ class Sala {
       director.irA(self.salidaEn(pos).destino())
     }
   }
+
+  method tieneInstrucciones() = false
+}
+
+class SalaMinijuego inherits Sala {
+    method imagenInstrucciones()
+    override method tieneInstrucciones() = true
 }
 
 // Hall de la AFA. La puerta habilitada depende de en qué paso del juego estás.
@@ -93,11 +100,11 @@ object salaPatio inherits Sala {
 }
 
 // Minijuego 1 - Toviggino. Entrás abajo (al lado de la puerta) y subís al escritorio.
-object salaToviggino inherits Sala {
+object salaToviggino inherits SalaMinijuego {
   override method fondo() = "img/SalaToviggino.png"
+  override method imagenInstrucciones() = "img/InstruccionesToviggino.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = [ new Salida(x = 10, y = 1, destino = salaPrincipal) ]
-
   override method alEntrar() { minijuegoToviggino.iniciar() }
   override method alSalir() { minijuegoToviggino.terminar() }
   override method jugadorSeMovio(pos) { minijuegoToviggino.jugadorSeMovio(pos) }
@@ -105,19 +112,20 @@ object salaToviggino inherits Sala {
 
 // Minijuego 2 - Caruso preso. Está en la otra punta; para llegar hay que resolver
 // el "camino oculto": solo ciertas baldosas son seguras (patrón escalera).
-object salaCaruso inherits Sala {
+object salaCaruso inherits SalaMinijuego {
   override method fondo() = "img/SalaCaruso.png"
+  override method imagenInstrucciones() = "img/InstruccionesCaruso.png"
   override method posicionInicial() = minijuegoCaruso.posInicial()
   override method salidas() = []   // se gana resolviendo el camino hasta Caruso
-
   override method alEntrar() { minijuegoCaruso.iniciar() }
   override method alSalir() { minijuegoCaruso.terminar() }
   override method jugadorSeMovio(pos) { minijuegoCaruso.jugadorSeMovio(pos) }
 }
 
 // Minijuego 2 - Beligoy. Beligoy salió un rato: revisá su archivo antes de que vuelva (30s).
-object salaBeligoy inherits Sala {
+object salaBeligoy inherits SalaMinijuego {
   override method fondo() = "img/SalaBeligoy.png"
+  override method imagenInstrucciones() = "img/InstruccionesBeligoy.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = []   // se gana encontrando los expedientes; se pierde si se acaba el tiempo
   override method alEntrar() { minijuegoBeligoy.iniciar() }
@@ -133,14 +141,51 @@ object config {
   var property debug = true
 }
 
+// ---------- Estados ----------
+
+class Estado {
+    method permiteMover() = false
+    method confirmar() { }
+}
+
+object estadoMenu inherits Estado {
+  override method confirmar(){
+    director.reiniciarDatos()
+    director.irA(salaPatio)
+  }
+}
+
+object estadoJugando inherits Estado {
+  override method permiteMover() = true
+}
+
+object estadoCartel inherits Estado {
+  override method confirmar(){ director.irA(salaPrincipal) }
+}
+
+object estadoPerdido inherits Estado{
+  override method confirmar(){ director.mostrarMenu() } 
+}
+
+class EstadoInstrucciones inherits Estado{
+    const sala
+    override method confirmar(){ director.entrarA(sala)}
+}
+
 // ---------- Director: salas, transiciones y vidas ----------
 object director {
   var property salaActual = null
-  var estado = "menu"   // "menu" | "jugando" | "cartel"
+  var estado = estadoMenu   // "menu" | "jugando" | "cartel"
   const indicadores = []
 
-  method irA(sala) {
-    estado = "jugando"
+
+  method irA(sala){
+    if (sala.tieneInstrucciones()) { self.mostrarInstrucciones(sala) }
+    else { self.entrarA(sala) }
+  }
+
+  method entrarA(sala) {
+    estado = estadoJugando
     if (salaActual != null) { salaActual.alSalir() }
     // Limpieza segura: copio la lista antes de borrar (no itero la lista viva).
     game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
@@ -188,8 +233,9 @@ object director {
     game.addVisual(new Fondo(image = imagen))
   }
 
-  method mostrarMenu() { self.mostrarPantalla("img/FondoMenu.png", "menu") }
-  method mostrarCartel() { self.mostrarPantalla("img/FondoIntro.png", "cartel") }
+  method mostrarMenu() { self.mostrarPantalla("img/FondoMenu.png", estadoMenu) }
+  method mostrarCartel() { self.mostrarPantalla("img/FondoIntro.png", estadoCartel) }
+  method mostrarInstrucciones(sala) { self.mostrarPantalla(sala.imagenInstrucciones(), new EstadoInstrucciones(sala = sala)) }
   
   // Reiniciar vidas y progreso
   method reiniciarDatos(){
@@ -198,21 +244,14 @@ object director {
     minijuegoBeligoy.completado(false)
     minijuegoCaruso.completado(false)
     minijuegoToviggino.completado(false)
+    minijuegoToviggino.posicionesDePruebasGeneradas(false)
   }
 
   // ENTER: avanza según en qué pantalla estés.
-  method confirmar() {
-    if (estado == "menu") { 
-      self.reiniciarDatos()
-      self.irA(salaPatio) 
-    }
-
-    else if (estado == "cartel") { self.irA(salaPrincipal) }
-    else if (estado == "perdiste") {self.mostrarMenu()}
-  }
+  method confirmar() { estado.confirmar() }
 
   method moverJugador(movimiento) {
-    if (estado == "jugando" and salaActual != null) {
+    if (estado.permiteMover() and salaActual != null) {
       const destino = movimiento.apply(jugador.position())
       if (salaActual.estaLibre(destino)) {
         jugador.position(destino)
@@ -233,13 +272,13 @@ object director {
   // Game Over: reinicia el juego completo (vidas, inventario, progreso).
   method gameOver() {
     self.reiniciarDatos()
-    self.mostrarPantalla("img/Pantalla_Perdida.jpg", "perdiste")
+    self.mostrarPantalla("img/Pantalla_Perdida.jpg", estadoPerdido)
   }
 
   // ----- Modo test (solo si config.debug) -----
   // Saltar directo a una sala sin tener que desbloquearla.
   method saltarA(sala) {
-    if (config.debug) { self.irA(sala) }
+    if (config.debug) { self.entrarA(sala) }
   }
 
   // Marcar todos los minijuegos como completados y volver al hall.

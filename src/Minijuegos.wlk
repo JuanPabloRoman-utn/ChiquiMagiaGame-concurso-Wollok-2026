@@ -12,10 +12,36 @@ class MarcaPatron {
 object minijuegoToviggino {
   const pruebasTotales = 3
   var pruebasAgarradas = 0
+  var property posicionesDePruebasGeneradas = false
   var pruebas = []
   var escapando = false
   var segundos = 0
   var property completado = false
+
+  method posicionAleatoria() {
+    const x = (1..(game.width() - 2)).anyOne()
+    const y = (1..(game.height() - 2)).anyOne()
+
+    return game.at(x, y)
+  }
+
+  method hayPruebaEn(posicion) {
+    return pruebas.any({ prueba => 
+        prueba.position().x() == posicion.x() and
+        prueba.position().y() == posicion.y()})
+  }
+
+  method generarPruebas() {
+    if (pruebas.size() < pruebasTotales) {
+        const posicion = self.posicionAleatoria()
+
+        if (not self.hayPruebaEn(posicion)) {
+            pruebas = pruebas + [new Prueba(position = posicion)]
+        }
+
+        self.generarPruebas()
+    } else { return pruebas }
+  }
 
   method iniciar() {
     pruebasAgarradas = 0
@@ -23,9 +49,13 @@ object minijuegoToviggino {
     segundos = 0
     toviggino.reset()
     if (not game.hasVisual(toviggino)) { game.addVisual(toviggino) }
-    pruebas = [ new Prueba(position = game.at(7, 9)),
-                new Prueba(position = game.at(10, 9)),
-                new Prueba(position = game.at(13, 9)) ]
+
+    if (not posicionesDePruebasGeneradas){
+        pruebas = []
+        self.generarPruebas()
+        posicionesDePruebasGeneradas = true
+    }
+    
     pruebas.forEach({ prueba => game.addVisual(prueba) })
     game.onTick(170, "tovGira", { toviggino.pensar() })
   }
@@ -34,7 +64,6 @@ object minijuegoToviggino {
     game.removeTickEvent("tovGira")
     game.removeTickEvent("tovTimer")
     pruebas.forEach({ prueba => if (game.hasVisual(prueba)) game.removeVisual(prueba) })
-    pruebas = []
   }
 
   method jugadorSeMovio(pos) {
