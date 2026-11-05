@@ -272,3 +272,112 @@ object minijuegoBeligoy {
     }
   }
 }
+
+// ---------- Minijuego 4: El Chiqui Mafia ----------
+object minijuegoChiqui {
+  var property completado = false
+  var choripanes = []
+  var denuncias = []
+
+  method iniciar() {
+    completado = false
+    choripanes = []
+    denuncias = []
+    chiqui.reset()
+
+    if (not game.hasVisual(chiqui)) { game.addVisual(chiqui) }
+
+    game.say(jugador, "Llego la hora! Disparale 5 denuncias con ESPACIO!")
+
+    // Ticks para proyectiles y movimiento del Chiqui
+    game.onTick(800, "generarChori", { self.generarChoripan() })
+    game.onTick(200, "moverProyectiles", { self.actualizarProyectiles() })
+    game.onTick(700, "moverChiqui", { self.moverChiqui() }) // <-- Chiqui más lento (cada 700ms)
+  }
+
+  method terminar() {
+    game.removeTickEvent("generarChori")
+    game.removeTickEvent("moverProyectiles")
+    game.removeTickEvent("moverChiqui") // <-- Limpiamos el tick
+    
+    choripanes.forEach({ c => if (game.hasVisual(c)) game.removeVisual(c) })
+    denuncias.forEach({ d => if (game.hasVisual(d)) game.removeVisual(d) })
+    if (game.hasVisual(chiqui)) game.removeVisual(chiqui)
+    
+    choripanes = []
+    denuncias = []
+  }
+
+  method moverChiqui() {
+    // Se mueve de forma independiente y más pausada
+    const nuevaX = (1 .. (game.width() - 2)).anyOne()
+    chiqui.position(game.at(nuevaX, 10))
+  }
+
+  method generarChoripan() {
+    const xAleatoria = (1 .. (game.width() - 2)).anyOne()
+    const chori = new Choripan(position = game.at(xAleatoria, 9))
+    choripanes.add(chori)
+    game.addVisual(chori)
+  }
+
+  method dispararDenuncia() {
+    const posDisparo = jugador.position().up(1)
+    const denuncia = new Denuncia(position = posDisparo)
+    denuncias.add(denuncia)
+    game.addVisual(denuncia)
+  }
+
+  method actualizarProyectiles() {
+    // 1. Mover Choripanes abajo y chequear colisión con jugador
+    choripanes.map({ c => c }).forEach({ c =>
+      c.moverAbajo()
+      if (c.position().x() == jugador.position().x() and c.position().y() == jugador.position().y()) {
+        self.removerChoripan(c)
+        director.perderVida()
+      } else if (c.position().y() <= 0) {
+        self.removerChoripan(c)
+      }
+    })
+
+    // 2. Mover Denuncias arriba y chequear colisión con Chiqui
+    denuncias.map({ d => d }).forEach({ d =>
+      d.moverArriba()
+      if (d.position().x() == chiqui.position().x() and d.position().y() >= chiqui.position().y()) {
+        self.removerDenuncia(d)
+        chiqui.recibirDenuncia()
+        game.say(chiqui, "Auch! Vidas: " + chiqui.vidas().toString())
+        if (chiqui.estaDerrotado()) {
+          self.ganar()
+        }
+      } else if (d.position().y() >= game.height() - 1) {
+        self.removerDenuncia(d)
+      }
+    })
+  }
+
+  method removerChoripan(chori) {
+    if (game.hasVisual(chori)) game.removeVisual(chori)
+    choripanes.remove(chori)
+  }
+
+  method removerDenuncia(denuncia) {
+    if (game.hasVisual(denuncia)) game.removeVisual(denuncia)
+    denuncias.remove(denuncia)
+  }
+
+  method jugadorSeMovio(pos) {
+    const choriTocado = choripanes.findOrDefault({ c => c.position().x() == pos.x() and c.position().y() == pos.y() }, null)
+    if (choriTocado != null) {
+      self.removerChoripan(choriTocado)
+      director.perderVida()
+    }
+  }
+
+  method ganar() {
+    completado = true
+    jugador.pruebas(jugador.pruebas() + 1)
+    game.say(jugador, "Derrotaste al Chiqui Mafia! Salvaste al futbol!")
+    director.completarJuego()
+  }
+}

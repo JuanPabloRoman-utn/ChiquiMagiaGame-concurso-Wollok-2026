@@ -80,3 +80,40 @@ class Archivero {
     }
   }
 }
+
+// ---------- Minijuego 4: Chiqui Mafia y Proyectiles ----------
+
+object chiqui {
+  var property position = game.at(9, 10)
+  var property image = "img/Chiqui.png"
+  var property vidas = 5
+
+  method reset() {
+    vidas = 5
+    position = game.at(9, 10)
+  }
+
+  method recibirDenuncia() {
+    vidas = vidas - 1
+  }
+
+  method estaDerrotado() = vidas <= 0
+}
+
+class Choripan {
+  var property position
+  const property image = "img/Chori.png"
+
+  method moverAbajo() {
+    position = position.down(1)
+  }
+}
+
+class Denuncia {
+  var property position
+  const property image = "img/Denuncia.png"
+
+  method moverArriba() {
+    position = position.up(1)
+  }
+}

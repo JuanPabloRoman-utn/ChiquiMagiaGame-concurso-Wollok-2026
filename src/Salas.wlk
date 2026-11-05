@@ -68,11 +68,11 @@ object salaPrincipal inherits Sala {
   override method fondo() = "img/FondoAFA.png"
   override method posicionInicial() = game.at(9, 2)   // abajo, sobre la alfombra
 
-  // Progresión: Toviggino (puerta x=7) y, al completarlo, Beligoy (puerta x=12).
-  // Caruso se juega saliendo directo de Toviggino. El resto de las puertas es futuro.
+  // Progresión: Toviggino (puerta x=7) -> Beligoy (puerta x=12) -> Chiqui (puerta central x=9).
   override method salidas() =
     if (not minijuegoToviggino.completado()) [ new Salida(x = 7, y = 8, destino = salaToviggino) ]
     else if (not minijuegoBeligoy.completado()) [ new Salida(x = 12, y = 8, destino = salaBeligoy) ]
+    else if (not minijuegoChiqui.completado()) [ new Salida(x = 9, y = 8, destino = salaChiqui) ]
     else []
 
   // Vitrinas de las paredes laterales (x1, x18) y pared del fondo con las puertas (y>=9).
@@ -122,15 +122,26 @@ object salaCaruso inherits SalaMinijuego {
   override method jugadorSeMovio(pos) { minijuegoCaruso.jugadorSeMovio(pos) }
 }
 
-// Minijuego 2 - Beligoy. Beligoy salió un rato: revisá su archivo antes de que vuelva (30s).
+// Minijuego 3 - Beligoy. Beligoy salió un rato: revisá su archivo antes de que vuelva (30s).
 object salaBeligoy inherits SalaMinijuego {
   override method fondo() = "img/SalaBeligoy.png"
   override method imagenInstrucciones() = "img/InstruccionesBeligoy.png"
   override method posicionInicial() = game.at(10, 2)
-  override method salidas() = []   // se gana encontrando los expedientes; se pierde si se acaba el tiempo
+  override method salidas() = []   // se gana encontrando los expedientes; se pierde si se acabó el tiempo
   override method alEntrar() { minijuegoBeligoy.iniciar() }
   override method alSalir() { minijuegoBeligoy.terminar() }
   override method jugadorSeMovio(pos) { minijuegoBeligoy.jugadorSeMovio(pos) }
+}
+
+// Minijuego 4 - Chiqui Mafia (Prueba Final).
+object salaChiqui inherits SalaMinijuego {
+  override method fondo() = "img/FondoAFA_tmp.png"
+  override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
+  override method posicionInicial() = game.at(10, 1)   // Abajo al centro
+  override method salidas() = []
+  override method alEntrar() { minijuegoChiqui.iniciar() }
+  override method alSalir() { minijuegoChiqui.terminar() }
+  override method jugadorSeMovio(pos) { minijuegoChiqui.jugadorSeMovio(pos) }
 }
 
 // ---------- Config / modo test ----------
@@ -244,7 +255,13 @@ object director {
     minijuegoBeligoy.completado(false)
     minijuegoCaruso.completado(false)
     minijuegoToviggino.completado(false)
+    minijuegoChiqui.completado(false)
     minijuegoToviggino.posicionesDePruebasGeneradas(false)
+  }
+
+  // Se llama al derrotar al Chiqui para mostrar la pantalla de juego ganado
+  method completarJuego() {
+    self.mostrarPantalla("img/Pantalla_Victoria.jpg", estadoPerdido)
   }
 
   // ENTER: avanza según en qué pantalla estés.
@@ -287,9 +304,9 @@ object director {
       minijuegoToviggino.completado(true)
       minijuegoBeligoy.completado(true)
       minijuegoCaruso.completado(true)
+      minijuegoChiqui.completado(true)
       self.irA(salaPrincipal)
       game.say(jugador, "[TEST] Todo completado")
     }
   }
 }
-

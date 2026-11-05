@@ -1,6 +1,7 @@
 import wollok.game.*
 import Personajes.*
 import Salas.*
+import Minijuegos.*
 
 program juego {
   game.title("Chiqui Mafia Game")
@@ -18,11 +19,19 @@ program juego {
   keyboard.a().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.left(1) }) })
   keyboard.d().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.right(1) }) })
 
+  // --- Mecánica de Disparo (Minijuego Chiqui) ---
+  keyboard.space().onPressDo({
+    if (director.salaActual() == salaChiqui) {
+      minijuegoChiqui.dispararDenuncia()
+    }
+  })
+
   // --- Teclas de modo test (solo sirven si config.debug = true) ---
-  // T/B/C: saltar directo a Toviggino / Beligoy / Caruso. U: completar todo y volver al hall.
+  // T/B/C/K: saltar directo a Toviggino / Beligoy / Caruso / Chiqui. U: completar todo y volver al hall.
   keyboard.t().onPressDo({ director.saltarA(salaToviggino) })
   keyboard.b().onPressDo({ director.saltarA(salaBeligoy) })
   keyboard.c().onPressDo({ director.saltarA(salaCaruso) })
+  keyboard.k().onPressDo({ director.saltarA(salaChiqui) })
   keyboard.u().onPressDo({ director.completarTodo() })
 
   // Indicadores (flechas verdes) titilando.
