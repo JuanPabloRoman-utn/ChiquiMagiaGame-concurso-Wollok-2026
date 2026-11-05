@@ -49,16 +49,9 @@ object toviggino {
   }
 }
 
-// Una prueba (carpeta de evidencia) sobre el escritorio.
-class Prueba {
-  var property position
-  var property image = "img/Prueba.png"
-}
-
-// Aliado Caruso: está preso en su sala; al llegar a él (resolviendo el camino) te da una prueba.
-object aliadoCaruso {
-  var property position = game.at(10, 10)
-  var property image = "img/Caruso.png"
+class Imagen {
+  const property position
+  const property image  
 }
 
 // Archivero (cajón): se revisa al pararte encima. Adentro puede haber un expediente.
