@@ -10,22 +10,6 @@ class Salida {
   method esAca(pos) = pos.x() == x and pos.y() == y
 }
 
-class Flecha {
-  const property position
-  const property image = "img/FlechaVerde.png"
-}
-
-class Fondo {
-  const property position = game.at(0, 0)
-  const property image
-}
-
-// Icono del HUD (inventario de pruebas, vidas) parado en una casilla.
-class IconoHud {
-  const property position
-  const property image
-}
-
 // ---------- Salas ----------
 class Sala {
   method fondo()            // polimórfico
@@ -191,9 +175,9 @@ object director {
     game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
     indicadores.clear()
     salaActual = sala
-    game.addVisual(new Fondo(image = sala.fondo()))
+    game.addVisual(new Imagen(position = game.at(0,0), image = sala.fondo()))
     sala.salidas().forEach({ unaSalida =>
-      const flecha = new Flecha(position = game.at(unaSalida.x(), unaSalida.y()))
+      const flecha = new Imagen(position = game.at(unaSalida.x(), unaSalida.y()), image = "img/FlechaVerde.png")
       indicadores.add(flecha)
       game.addVisual(flecha)
     })
@@ -207,12 +191,12 @@ object director {
   method dibujarHud() {
     if (jugador.pruebas() > 0) {
       (1 .. jugador.pruebas()).forEach({ i =>
-        game.addVisual(new IconoHud(position = game.at(i, 0), image = "img/Prueba.png"))
+        game.addVisual(new Imagen(position = game.at(i,0), image = "img/Prueba.png"))
       })
     }
     if (jugador.vidas() > 0) {
       (1 .. jugador.vidas()).forEach({ i =>
-        game.addVisual(new IconoHud(position = game.at(game.width() - i, 0), image = "img/Vida.png"))
+        game.addVisual(new Imagen(position = game.at(game.width() - i, 0), image = "img/Vida.png"))
       })
     }
   }
@@ -230,7 +214,7 @@ object director {
     salaActual = null
     indicadores.clear()
     game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
-    game.addVisual(new Fondo(image = imagen))
+    game.addVisual(new Imagen(position = game.at(0,0), image = imagen))
   }
 
   method mostrarMenu() { self.mostrarPantalla("img/FondoMenu.png", estadoMenu) }

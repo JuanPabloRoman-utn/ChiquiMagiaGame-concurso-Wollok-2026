@@ -2,11 +2,6 @@ import wollok.game.*
 import Personajes.*
 import Salas.*
 
-// Marca verde que muestra una casilla del patrón (minijuego de Caruso).
-class MarcaPatron {
-  const property position
-  const property image = "img/Marca.png"
-}
 
 // ---------- Minijuego 1: Toviggino ----------
 object minijuegoToviggino {
@@ -36,7 +31,7 @@ object minijuegoToviggino {
         const posicion = self.posicionAleatoria()
 
         if (not self.hayPruebaEn(posicion)) {
-            pruebas = pruebas + [new Prueba(position = posicion)]
+            pruebas = pruebas + [new Imagen(position = posicion, image = "img/Prueba.png")]
         }
 
         self.generarPruebas()
@@ -127,6 +122,7 @@ object minijuegoToviggino {
 object minijuegoCaruso {
   const posInicial = game.at(1, 1)
   const celda = game.at(10, 10)   // donde está Caruso preso
+  const caruso = new Imagen(position = celda, image = "img/Caruso.png")
   var camino = []
   var marcas = []
   var mostrando = false
@@ -137,28 +133,39 @@ object minijuegoCaruso {
   method iniciar() {
     completado = false
     self.construirCamino()
-    aliadoCaruso.position(celda)
-    if (not game.hasVisual(aliadoCaruso)) { game.addVisual(aliadoCaruso) }
+    if (not game.hasVisual(caruso)) { game.addVisual(caruso) }
     self.mostrarPatron(3000, "Memoriza el camino hasta Caruso!")
   }
 
   // Patrón escalera desde (1,1): arriba, derecha, arriba, derecha... hasta (10,10).
+  
+  method generarSiguienteCamino(actual) {
+    if (actual != celda) {
+      const siguientes = []
+
+      if (actual.x() < celda.x()){
+        siguientes.add(game.at(actual.x() + 1, actual.y()))
+      }
+
+      if (actual.y() < celda.y()){
+        siguientes.add(game.at(actual.x(), actual.y() + 1))
+      }
+
+      const siguiente = siguientes.anyOne()
+      camino.add(siguiente)
+      self.generarSiguienteCamino(siguiente)
+    }
+  }
+
   method construirCamino() {
     camino = [ posInicial ]
-    var x = 1
-    var y = 1
-    (1 .. 9).forEach({ i =>
-      y = y + 1
-      camino.add(game.at(x, y))
-      x = x + 1
-      camino.add(game.at(x, y))
-    })
+    self.generarSiguienteCamino(posInicial)
   }
 
   method mostrarPatron(ms, mensaje) {
     if (not mostrando) {
       mostrando = true
-      marcas = camino.map({ p => new MarcaPatron(position = p) })
+      marcas = camino.map({ p => new Imagen(position = p, image = "img/Marca.png") })
       marcas.forEach({ m => game.addVisual(m) })
       game.say(jugador, mensaje)
       game.onTick(ms, "caruPatron", { self.ocultarPatron() })
