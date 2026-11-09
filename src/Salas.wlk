@@ -162,6 +162,10 @@ object estadoPerdido inherits Estado{
   override method confirmar(){ director.mostrarMenu() } 
 }
 
+object estadoVictoria inherits Estado {
+  override method confirmar(){ director.mostrarMenu()}
+}
+
 class EstadoInstrucciones inherits Estado{
     const sala
     override method confirmar(){ director.entrarA(sala)}
@@ -245,7 +249,7 @@ object director {
 
   // Se llama al derrotar al Chiqui para mostrar la pantalla de juego ganado
   method completarJuego() {
-    self.mostrarPantalla("img/Pantalla_Victoria.jpg", estadoPerdido)
+    self.mostrarPantalla("img/PantallaGanador.png", estadoVictoria)
   }
 
   // ENTER: avanza según en qué pantalla estés.
