@@ -280,7 +280,77 @@ object minijuegoBeligoy {
   }
 }
 
-// ---------- Minijuego 4: El Chiqui Mafia ----------
+// ---------- Minijuego 4: Pelado Bicampeon + Di Maria (persecucion en la cancha) ----------
+// Di Maria esta arreglado con el Chiqui y tiene la ultima prueba. El Pelado
+// Bicampeon lo defiende persiguiendote por toda la cancha. Esquivalo y llega
+// hasta Di Maria para arrebatarle la prueba.
+object minijuegoPelado {
+  var property completado = false
+
+  method iniciar() {
+    completado = false
+    pelado.reset()
+    // El laberinto ya viene dibujado en el fondo (img/SalaPelado.png).
+    if (not game.hasVisual(diMaria)) { game.addVisual(diMaria) }
+    if (not game.hasVisual(pelado)) { game.addVisual(pelado) }
+    game.say(jugador, "Gambetea al Pelado y llega a Di Maria!")
+    game.onTick(400, "pelaPersigue", { self.moverPelado() })
+  }
+
+  method terminar() {
+    game.removeTickEvent("pelaPersigue")
+    if (game.hasVisual(pelado)) { game.removeVisual(pelado) }
+    if (game.hasVisual(diMaria)) { game.removeVisual(diMaria) }
+  }
+
+  // El Pelado se mueve una casilla hacia el jugador por los pasillos libres.
+  method moverPelado() {
+    // Solo actua si seguis en el laberinto (evita ticks residuales al salir).
+    if (director.salaActual() == salaPelado) {
+      const objetivo = jugador.position()
+      const candidatos = [ pelado.position().up(1), pelado.position().down(1),
+                           pelado.position().left(1), pelado.position().right(1) ]
+        .filter({ p => salaPelado.estaLibre(p) })
+      if (not candidatos.isEmpty()) {
+        const mejor = candidatos.min({ p =>
+          (p.x() - objetivo.x()).abs() + (p.y() - objetivo.y()).abs() })
+        pelado.position(mejor)
+        self.chequearChoque()
+      }
+    }
+  }
+
+  method chequearChoque() {
+    if (pelado.position().x() == jugador.position().x() and
+        pelado.position().y() == jugador.position().y()) {
+      self.atrapado()
+    }
+  }
+
+  method atrapado() {
+    game.say(jugador, "Te agarro el Pelado!")
+    director.perderVida()
+  }
+
+  method jugadorSeMovio(pos) {
+    if (pos.x() == diMaria.position().x() and pos.y() == diMaria.position().y()) {
+      self.ganar()
+    } else if (pos.x() == pelado.position().x() and pos.y() == pelado.position().y()) {
+      self.atrapado()
+    }
+  }
+
+  method ganar() {
+    if (not completado) {
+      completado = true
+      jugador.pruebas(jugador.pruebas() + 1)
+      game.say(jugador, "Agarraste la prueba del arreglo Di Maria-Chiqui!")
+      director.mostrarJuicioFinal()
+    }
+  }
+}
+
+// ---------- Minijuego 5 (final): El Chiqui Mafia ----------
 object minijuegoChiqui {
   var property completado = false
   var choripanes = []
@@ -382,8 +452,8 @@ object minijuegoChiqui {
   }
 
   method ganar() {
+    // El Chiqui es el juicio final (atraparlo con todas las pruebas), no suma prueba.
     completado = true
-    jugador.pruebas(jugador.pruebas() + 1)
     game.say(jugador, "Derrotaste al Chiqui Mafia! Salvaste al futbol!")
     director.completarJuego()
   }

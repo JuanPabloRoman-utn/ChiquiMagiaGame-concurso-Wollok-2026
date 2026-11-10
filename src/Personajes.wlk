@@ -51,7 +51,23 @@ object toviggino {
 
 class Imagen {
   const property position
-  const property image  
+  const property image
+}
+
+// ---------- Minijuego 4 (previo al Chiqui): Pelado Bicampeon y Di Maria ----------
+// Di Maria esta arreglado con el Chiqui: tiene la ultima prueba y esta fijo,
+// custodiando el expediente. El Pelado Bicampeon lo defiende persiguiendote por
+// el laberinto como un fantasma de Pac-Man.
+object diMaria {
+  var property position = game.at(10, 10)   // fijo, arriba-centro de la cancha
+  var property image = "img/DiMaria.png"
+}
+
+object pelado {
+  var property position = game.at(10, 6)
+  var property image = "img/Pelado.png"
+
+  method reset() { position = game.at(10, 6) }   // arranca en el medio de la cancha
 }
 
 // Archivero (cajón): se revisa al pararte encima. Adentro puede haber un expediente.

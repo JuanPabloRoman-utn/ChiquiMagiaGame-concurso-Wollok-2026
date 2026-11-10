@@ -9,8 +9,11 @@ program juego {
   game.width(20)
   game.height(12)
 
-  // Arranca en el menú principal. ENTER avanza (menú -> patio, cartel -> hall).
-  director.mostrarMenu()
+  // [RAMA test/pelado-directo] Arranca DIRECTO en la cancha del Pelado para probarlo.
+  // Para volver al flujo normal: descomentar mostrarMenu() y comentar lo de abajo.
+  // director.mostrarMenu()
+  director.reiniciarDatos()
+  director.entrarA(salaPelado)
   keyboard.enter().onPressDo({ director.confirmar() })
 
   // Movimiento casilla por casilla (WASD). El director maneja todo.
@@ -31,6 +34,7 @@ program juego {
   keyboard.t().onPressDo({ director.saltarA(salaToviggino) })
   keyboard.b().onPressDo({ director.saltarA(salaBeligoy) })
   keyboard.c().onPressDo({ director.saltarA(salaCaruso) })
+  keyboard.l().onPressDo({ director.irAlLaberinto() })
   keyboard.k().onPressDo({ director.saltarA(salaChiqui) })
   keyboard.u().onPressDo({ director.completarTodo() })
 
