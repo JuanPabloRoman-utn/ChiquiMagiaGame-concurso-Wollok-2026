@@ -52,13 +52,11 @@ object salaPrincipal inherits Sala {
   override method fondo() = "img/FondoAFA.png"
   override method posicionInicial() = game.at(9, 2)   // abajo, sobre la alfombra
 
-  // Progresión: Toviggino (x=7) -> Beligoy (x=12) -> Pelado (puerta central x=9).
-  // El Chiqui ya NO es una puerta del menú: se llega desde la pantalla de juicio
-  // final, después de ganar el minijuego del Pelado (4ª y última prueba).
+  // Progresión: Toviggino (puerta x=7) -> Beligoy (puerta x=12) -> Chiqui (puerta central x=9).
   override method salidas() =
     if (not minijuegoToviggino.completado()) [ new Salida(x = 7, y = 8, destino = salaToviggino) ]
     else if (not minijuegoBeligoy.completado()) [ new Salida(x = 12, y = 8, destino = salaBeligoy) ]
-    else if (not minijuegoPelado.completado()) [ new Salida(x = 9, y = 8, destino = salaPelado) ]
+    else if (not minijuegoChiqui.completado()) [ new Salida(x = 9, y = 8, destino = salaChiqui) ]
     else []
 
   // Vitrinas de las paredes laterales (x1, x18) y pared del fondo con las puertas (y>=9).
@@ -119,20 +117,7 @@ object salaBeligoy inherits SalaMinijuego {
   override method jugadorSeMovio(pos) { minijuegoBeligoy.jugadorSeMovio(pos) }
 }
 
-// Minijuego 4 - Pelado Bicampeon + Di Maria (laberinto estilo Pac-Man).
-// Di Maria custodia la ultima prueba; el Pelado te persigue por el laberinto.
-object salaPelado inherits SalaMinijuego {
-  override method fondo() = "img/CanchaFutbol.png"   // cancha abierta
-  override method imagenInstrucciones() = "img/InstruccionesPelado.png"
-  override method posicionInicial() = game.at(1, 1)
-  override method salidas() = []   // se gana llegando a Di Maria
-  override method alEntrar() { minijuegoPelado.iniciar() }
-  override method alSalir() { minijuegoPelado.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoPelado.jugadorSeMovio(pos) }
-  // Cancha abierta: te moves por todo menos los bordes (estaLibre de Sala).
-}
-
-// Minijuego final - Chiqui Mafia (el juicio final, atraparlo con todas las pruebas).
+// Minijuego final - Chiqui Mafia (el juicio final).
 object salaChiqui inherits SalaMinijuego {
   override method fondo() = "img/FondoAFA_tmp.png"
   override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
@@ -143,10 +128,20 @@ object salaChiqui inherits SalaMinijuego {
   override method jugadorSeMovio(pos) { minijuegoChiqui.jugadorSeMovio(pos) }
 }
 
+// Minijuego 4 - Pelado Bicampeon + Di Maria (persecucion en la cancha).
+object salaPelado inherits SalaMinijuego {
+  override method fondo() = "img/CanchaFutbol.png"   // cancha abierta
+  override method imagenInstrucciones() = "img/InstruccionesPelado.png"
+  override method posicionInicial() = game.at(1, 1)
+  override method salidas() = []   // se gana llegando a Di Maria
+  override method alEntrar() { minijuegoPelado.iniciar() }
+  override method alSalir() { minijuegoPelado.terminar() }
+  override method jugadorSeMovio(pos) { minijuegoPelado.jugadorSeMovio(pos) }
+  // Cancha con barrera: bordes + la fila-barrera con hueco central.
+  override method estaLibre(pos) = super(pos) and not minijuegoPelado.esBarrera(pos)
+}
+
 // ---------- Config / modo test ----------
-// Con debug = true se habilitan teclas para saltar a cualquier sala y marcar
-// minijuegos como completados (para no tener que jugarlos cada vez que pruebo).
-// IMPORTANTE: poner debug = false para la entrega final.
 object config {
   var property debug = true
 }
@@ -179,12 +174,6 @@ object estadoPerdido inherits Estado{
 
 object estadoVictoria inherits Estado {
   override method confirmar(){ director.mostrarMenu()}
-}
-
-// Pantalla "Conseguiste todas las pruebas, es hora del juicio final".
-// ENTER entra directo al Chiqui (sin instrucciones: esta pantalla hace de intro).
-object estadoJuicioFinal inherits Estado {
-  override method confirmar(){ director.entrarA(salaChiqui) }
 }
 
 class EstadoInstrucciones inherits Estado{
@@ -269,7 +258,7 @@ object director {
     minijuegoToviggino.posicionesDePruebasGeneradas(false)
   }
 
-  // Se llama al ganar el minijuego del Pelado (4ª prueba): pantalla de juicio final.
+  // Pantalla "Conseguiste todas las pruebas, es hora del juicio final".
   method mostrarJuicioFinal() {
     self.mostrarPantalla("img/PantallaJuicioFinal.png", estadoJuicioFinal)
   }
@@ -313,15 +302,6 @@ object director {
     if (config.debug) { self.entrarA(sala) }
   }
 
-  // Atajo de test: desde el menu, saltar directo al laberinto de Di Maria.
-  method irAlLaberinto() {
-    if (config.debug) {
-      self.mostrarMenu()        // deja el estado limpio (salaActual = null)
-      self.reiniciarDatos()
-      self.entrarA(salaPelado)
-    }
-  }
-
   // Marcar todos los minijuegos como completados y volver al hall.
   method completarTodo() {
     if (config.debug) {
@@ -334,4 +314,18 @@ object director {
       game.say(jugador, "[TEST] Todo completado")
     }
   }
+
+  // Atajo de test: saltar directo a la cancha del Pelado desde el menu limpio.
+  method irAlLaberinto() {
+    if (config.debug) {
+      self.mostrarMenu()
+      self.reiniciarDatos()
+      self.entrarA(salaPelado)
+    }
+  }
+}
+
+// Pantalla de juicio final: ENTER entra directo al Chiqui.
+object estadoJuicioFinal inherits Estado {
+  override method confirmar(){ director.entrarA(salaChiqui) }
 }

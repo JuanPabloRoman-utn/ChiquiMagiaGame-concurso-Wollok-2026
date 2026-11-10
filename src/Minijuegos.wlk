@@ -30,7 +30,10 @@ object minijuegoToviggino {
     if (pruebas.size() < pruebasTotales) {
         const posicion = self.posicionAleatoria()
 
-        if (not self.hayPruebaEn(posicion)) {
+        if (not self.hayPruebaEn(posicion)
+            and not salaToviggino.haySalida(posicion)
+            and posicion != salaToviggino.posicionInicial()
+            and posicion != toviggino.position()) {
             pruebas = pruebas + [new Imagen(position = posicion, image = "img/Prueba.png")]
         }
 
@@ -286,39 +289,127 @@ object minijuegoBeligoy {
 // hasta Di Maria para arrebatarle la prueba.
 object minijuegoPelado {
   var property completado = false
+  var barrera = []
+  var sonido = null
+  var sonidoCerca = null
+  var cercaActivo = false
+
+  // Pozos trampa esparcidos (patron damero, validado: siempre hay camino a Di Maria).
+  const pozos = [game.at(1,5), game.at(1,9), game.at(2,6), game.at(3,9), game.at(4,2), game.at(5,3), game.at(6,8), game.at(7,5), game.at(7,7), game.at(10,4), game.at(11,1), game.at(11,3), game.at(12,2), game.at(13,5), game.at(13,7), game.at(15,1), game.at(15,5), game.at(16,4), game.at(17,5), game.at(18,4)]
 
   method iniciar() {
     completado = false
     pelado.reset()
+    self.dibujarBarrera()
     if (not game.hasVisual(diMaria)) { game.addVisual(diMaria) }
     if (not game.hasVisual(pelado)) { game.addVisual(pelado) }
     game.say(jugador, "Gambetea al Pelado y llega a Di Maria!")
-    game.onTick(400, "pelaPersigue", { self.moverPelado() })
+    // Audio del Pelado gritando "BICAMPEONES" en loop (placeholder: bicampeones.mp3).
+    sonido = game.sound("bicampeones.mp3")
+    sonido.shouldLoop(true)
+    sonido.play()
+    // Audio de tension que suena solo cuando el Pelado esta cerca (placeholder).
+    sonidoCerca = game.sound("pelado_cerca.mp3")
+    sonidoCerca.shouldLoop(true)
+    cercaActivo = false
+    game.onTick(417, "pelaPersigue", { self.moverPelado() })   // +20% de velocidad
+    game.onTick(350, "diMariaAnim", { diMaria.animar() })      // anima a Di Maria
+    game.onTick(300, "peladoAnim", { pelado.animar() })        // anima al Pelado
   }
 
   method dist(a, b) = (a.x() - b.x()).abs() + (a.y() - b.y()).abs()
 
+  // Hay pozo trampa en esta celda? (si lo pisas no podes avanzar).
+  method esBarrera(pos) = pozos.any({ p => p.x() == pos.x() and p.y() == pos.y() })
+
+  method dibujarBarrera() {
+    barrera = []
+    pozos.forEach({ p =>
+      const pozo = new Imagen(position = p, image = "img/pozotrampa.png")
+      barrera.add(pozo)
+      game.addVisual(pozo)
+    })
+  }
+
   method terminar() {
     game.removeTickEvent("pelaPersigue")
+    game.removeTickEvent("diMariaAnim")
+    game.removeTickEvent("peladoAnim")
+    if (sonido != null) { sonido.stop() }
+    if (sonidoCerca != null and cercaActivo) { sonidoCerca.stop() }   // solo si estaba sonando
+    cercaActivo = false
+    barrera.forEach({ m => if (game.hasVisual(m)) game.removeVisual(m) })
+    barrera = []
     if (game.hasVisual(pelado)) { game.removeVisual(pelado) }
     if (game.hasVisual(diMaria)) { game.removeVisual(diMaria) }
   }
 
-  // El Pelado se mueve una casilla hacia el jugador por los pasillos libres.
+  // El Pelado se mueve siguiendo el camino mas corto (BFS) hacia el jugador,
+  // rodeando los pozos. Asi nunca se queda trabado.
   method moverPelado() {
-    // Solo actua si seguis en el laberinto (evita ticks residuales al salir).
+    // Solo actua si seguis en la cancha (evita ticks residuales al salir).
     if (director.salaActual() == salaPelado) {
-      const objetivo = jugador.position()
-      const candidatos = [ pelado.position().up(1), pelado.position().down(1),
-                           pelado.position().left(1), pelado.position().right(1) ]
-        .filter({ p => salaPelado.estaLibre(p) })
-      if (not candidatos.isEmpty()) {
-        var mejor = candidatos.first()
-        candidatos.forEach({ p =>
-          if (self.dist(p, objetivo) < self.dist(mejor, objetivo)) { mejor = p }
+      pelado.position(self.proximoPaso())   // si no hay camino, devuelve la misma celda
+      self.chequearCercania()
+      self.chequearChoque()
+    }
+  }
+
+  method mismaCelda(a, b) = a.x() == b.x() and a.y() == b.y()
+
+  method vecinos(p) = [ p.up(1), p.down(1), p.left(1), p.right(1) ]
+
+  // Una celda es transitable para el Pelado si no es borde/pozo ni la de Di Maria.
+  method libreParaPelado(p) = salaPelado.estaLibre(p)
+    and not self.mismaCelda(p, diMaria.position())
+
+  // Primer paso del camino mas corto del Pelado hacia el jugador (BFS).
+  method proximoPaso() {
+    const meta = jugador.position()
+    const inicio = pelado.position()
+    const visitados = [inicio]
+    const frontera = []
+    self.vecinos(inicio).forEach({ v =>
+      if (self.libreParaPelado(v) and not visitados.any({ q => self.mismaCelda(q, v) })) {
+        visitados.add(v)
+        frontera.add([v, v])   // [celda, primer paso que lleva a ella]
+      }
+    })
+    return self.bfs(frontera, visitados, meta, inicio)
+  }
+
+  // Devuelve el primer paso del camino mas corto a 'meta', o 'inicio' si no hay.
+  method bfs(frontera, visitados, meta, inicio) {
+    if (frontera.isEmpty()) {
+      return inicio   // sin camino: el Pelado se queda donde esta
+    } else {
+      if (frontera.any({ par => self.mismaCelda(par.get(0), meta) })) {
+        return frontera.find({ par => self.mismaCelda(par.get(0), meta) }).get(1)
+      } else {
+        const siguiente = []
+        frontera.forEach({ par =>
+          self.vecinos(par.get(0)).forEach({ v =>
+            if (self.libreParaPelado(v) and not visitados.any({ q => self.mismaCelda(q, v) })) {
+              visitados.add(v)
+              siguiente.add([v, par.get(1)])
+            }
+          })
         })
-        pelado.position(mejor)
-        self.chequearChoque()
+        return self.bfs(siguiente, visitados, meta, inicio)
+      }
+    }
+  }
+
+  // Prende/apaga el audio de cercania segun la distancia al Pelado (<= 3 casillas).
+  method chequearCercania() {
+    if (sonidoCerca != null) {
+      const cerca = self.dist(pelado.position(), jugador.position()) <= 3
+      if (cerca and not cercaActivo) {
+        cercaActivo = true
+        sonidoCerca.play()
+      } else if (not cerca and cercaActivo) {
+        cercaActivo = false
+        sonidoCerca.stop()
       }
     }
   }
@@ -332,7 +423,12 @@ object minijuegoPelado {
 
   method atrapado() {
     game.say(jugador, "Te agarro el Pelado!")
-    director.perderVida()
+    jugador.vidas(jugador.vidas() - 1)
+    if (jugador.vidas() <= 0) {
+      director.gameOver()          // sin vidas: perdiste el juego
+    } else {
+      director.entrarA(salaPelado) // todavia tenes vidas: reintentas el Pelado
+    }
   }
 
   method jugadorSeMovio(pos) {

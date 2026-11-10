@@ -60,14 +60,34 @@ class Imagen {
 // el laberinto como un fantasma de Pac-Man.
 object diMaria {
   var property position = game.at(10, 10)   // fijo, arriba-centro de la cancha
-  var property image = "img/DiMaria.png"
+  var property image = "img/DiMariaUno.png"
+  var enUno = true
+
+  // Alterna entre los dos sprites para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) { image = "img/DiMariaUno.png" } else { image = "img/DiMariaDOS.png" }
+  }
 }
 
 object pelado {
-  var property position = game.at(10, 6)
-  var property image = "img/Pelado.png"
+  var property position = game.at(10, 8)
+  var property image = "img/peladoUNO.png"
+  var enUno = true
 
-  method reset() { position = game.at(10, 6) }   // arranca en el medio de la cancha
+  method reset() {
+   position = game.at(10, 8)
+    }   // arranca arriba, defendiendo a Di Maria
+
+  // Alterna entre los dos sprites para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) { 
+    image = "img/peladoUNO.png" 
+    } else {
+     image = "img/peladoDOS.png" 
+     }
+  }
 }
 
 // Archivero (cajón): se revisa al pararte encima. Adentro puede haber un expediente.

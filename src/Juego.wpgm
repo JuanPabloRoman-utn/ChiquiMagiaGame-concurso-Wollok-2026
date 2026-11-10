@@ -9,9 +9,11 @@ program juego {
   game.width(20)
   game.height(12)
 
+  // [RAMA test/pelado-directo] Arranca en el menu y auto-entra a la cancha del Pelado
+  // un instante DESPUES de iniciar (no se puede entrar con sonido/ticks antes de game.start()).
+  // Para volver al flujo normal: borrar el onTick "autoPelado" de abajo.
   // [RAMA test/pelado-directo] Arranca DIRECTO en la cancha del Pelado para probarlo.
-  // Para volver al flujo normal: descomentar mostrarMenu() y comentar lo de abajo.
-  // director.mostrarMenu()
+  // Para volver al flujo normal: usar director.mostrarMenu() en vez de las dos lineas de abajo.
   director.reiniciarDatos()
   director.entrarA(salaPelado)
   keyboard.enter().onPressDo({ director.confirmar() })
@@ -21,7 +23,7 @@ program juego {
   keyboard.s().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.down(1) }) })
   keyboard.a().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.left(1) }) })
   keyboard.d().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.right(1) }) })
-
+  
   // --- Mecánica de Disparo (Minijuego Chiqui) ---
   keyboard.space().onPressDo({
     if (director.salaActual() == salaChiqui) {

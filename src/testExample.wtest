@@ -75,6 +75,17 @@ describe "minijuego Toviggino" {
     minijuegoToviggino.tick()
     assert.equals(1, jugador.vidas())
   }
+
+  test "las pruebas nunca aparecen sobre los personajes ni sobre la flecha de salida" {
+    (1 .. 100).forEach({ i =>
+      minijuegoToviggino.terminar()
+      minijuegoToviggino.posicionesDePruebasGeneradas(false)
+      minijuegoToviggino.iniciar()
+      game.allVisuals().filter({ visual => visual.image() == "img/Prueba.png" }).forEach({ visual =>
+        assert.notThat(visual.position().x() == 10 and [1, 2, 10].contains(visual.position().y()))
+      })
+    })
+  }
 }
 
 describe "minijuego Beligoy" {
