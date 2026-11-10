@@ -290,12 +290,13 @@ object minijuegoPelado {
   method iniciar() {
     completado = false
     pelado.reset()
-    // El laberinto ya viene dibujado en el fondo (img/SalaPelado.png).
     if (not game.hasVisual(diMaria)) { game.addVisual(diMaria) }
     if (not game.hasVisual(pelado)) { game.addVisual(pelado) }
     game.say(jugador, "Gambetea al Pelado y llega a Di Maria!")
     game.onTick(400, "pelaPersigue", { self.moverPelado() })
   }
+
+  method dist(a, b) = (a.x() - b.x()).abs() + (a.y() - b.y()).abs()
 
   method terminar() {
     game.removeTickEvent("pelaPersigue")
@@ -312,8 +313,10 @@ object minijuegoPelado {
                            pelado.position().left(1), pelado.position().right(1) ]
         .filter({ p => salaPelado.estaLibre(p) })
       if (not candidatos.isEmpty()) {
-        const mejor = candidatos.min({ p =>
-          (p.x() - objetivo.x()).abs() + (p.y() - objetivo.y()).abs() })
+        var mejor = candidatos.first()
+        candidatos.forEach({ p =>
+          if (self.dist(p, objetivo) < self.dist(mejor, objetivo)) { mejor = p }
+        })
         pelado.position(mejor)
         self.chequearChoque()
       }
