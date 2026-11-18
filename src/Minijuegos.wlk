@@ -302,11 +302,11 @@ object minijuegoPelado {
     if (not game.hasVisual(diMaria)) { game.addVisual(diMaria) }
     if (not game.hasVisual(pelado)) { game.addVisual(pelado) }
     game.say(jugador, "Gambetea al Pelado y llega a Di Maria!")
-    // TEST: audio desactivado para descartar que sea la causa del freeze.
-    // sonido = game.sound("Pelado-Bicampeon.mp3")
-    // sonido.shouldLoop(true)
-    // sonido.play()
-    game.onTick(417, "pelaPersigue", { self.moverPelado() })   // +20% de velocidad
+    // Musica de fondo del minijuego (en loop). Se frena en terminar().
+    sonido = game.sound("sounds/Pelado-Bicampeon.mp3")
+    sonido.shouldLoop(true)
+    sonido.play()
+    game.onTick(493, "pelaPersigue", { self.moverPelado() })   // +10% de velocidad (542 -> 493 ms)
     game.onTick(350, "diMariaAnim", { diMaria.animar() })      // anima a Di Maria
     game.onTick(300, "peladoAnim", { pelado.animar() })        // anima al Pelado
   }

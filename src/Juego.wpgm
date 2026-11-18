@@ -9,19 +9,9 @@ program juego {
   game.width(20)
   game.height(12)
 
-  // [RAMA test/pelado-directo] Arranca en el menu y auto-entra a la cancha del Pelado
-  // un instante DESPUES de iniciar (no se puede entrar con sonido/ticks antes de game.start()).
-  // Para volver al flujo normal: borrar el onTick "autoPelado" de abajo.
-  // [RAMA test/pelado-directo] Arranca DIRECTO en la cancha del Pelado para probarlo.
-  // Para volver al flujo normal: usar director.mostrarMenu() en vez de las dos lineas de abajo.
-  // [DIAGNOSTICO] Arranca en el hall con Tov/Caruso/Beligoy completos -> muestra la
-  // puerta del Pelado, para reproducir el camino del usuario por la puerta.
+  // Arranca mostrando el MENU. ENTER avanza por el flujo normal.
   director.reiniciarDatos()
-  minijuegoToviggino.completado(true)
-  minijuegoCaruso.completado(true)
-  minijuegoBeligoy.completado(true)
-  jugador.pruebas(3)
-  director.entrarA(salaPrincipal)
+  director.mostrarMenu()
   keyboard.enter().onPressDo({ director.confirmar() })
 
   // Movimiento casilla por casilla (WASD). El director maneja todo.
