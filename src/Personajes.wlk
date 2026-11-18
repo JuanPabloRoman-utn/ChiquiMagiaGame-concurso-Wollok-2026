@@ -12,6 +12,11 @@ object jugador {
     if (haciaArriba) { image = "img/LuchoEspaldas.png" }
     else { image = "img/LuchoFrente.png" }
   }
+
+  method perderVida(){vidas -= 1}
+  method seQuedoSinVidas(){return vidas == 0}
+
+  
 }
 
 // Toviggino: está de espaldas y se da vuelta cada tanto (rápido, casi sin aviso).
@@ -86,8 +91,8 @@ object chiqui {
     position = game.at(9, 10)
   }
 
-  method recibirDenuncia() {
-    vidas = vidas - 1
+  method perderVida() {
+    vidas -= 1
   }
 
   method estaDerrotado() = vidas <= 0

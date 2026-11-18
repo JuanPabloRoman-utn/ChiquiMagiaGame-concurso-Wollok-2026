@@ -21,9 +21,7 @@ program juego {
 
   // --- Mecánica de Disparo (Minijuego Chiqui) ---
   keyboard.space().onPressDo({
-    if (director.salaActual() == salaChiqui) {
-      minijuegoChiqui.dispararDenuncia()
-    }
+    director.accionar()
   })
 
   // --- Teclas de modo test (solo sirven si config.debug = true) ---

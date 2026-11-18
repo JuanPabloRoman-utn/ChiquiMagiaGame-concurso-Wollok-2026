@@ -352,7 +352,7 @@ object minijuegoChiqui {
       d.moverArriba()
       if (d.position().x() == chiqui.position().x() and d.position().y() >= chiqui.position().y()) {
         self.removerDenuncia(d)
-        chiqui.recibirDenuncia()
+        chiqui.perderVida()
         game.say(chiqui, "Auch! Vidas: " + chiqui.vidas().toString())
         if (chiqui.estaDerrotado()) {
           self.ganar()

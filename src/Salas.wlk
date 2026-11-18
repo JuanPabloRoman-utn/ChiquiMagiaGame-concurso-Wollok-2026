@@ -39,6 +39,8 @@ class Sala {
     }
   }
 
+  method realizarAccionEnSala(){}
+
   method tieneInstrucciones() = false
 }
 
@@ -126,6 +128,7 @@ object salaChiqui inherits SalaMinijuego {
   override method alEntrar() { minijuegoChiqui.iniciar() }
   override method alSalir() { minijuegoChiqui.terminar() }
   override method jugadorSeMovio(pos) { minijuegoChiqui.jugadorSeMovio(pos) }
+  override method realizarAccionEnSala() {minijuegoChiqui.dispararDenuncia()}
 }
 
 // ---------- Config / modo test ----------
@@ -181,6 +184,11 @@ object director {
   method irA(sala){
     if (sala.tieneInstrucciones()) { self.mostrarInstrucciones(sala) }
     else { self.entrarA(sala) }
+  }
+
+  method accionar(){
+    
+    salaActual.realizarAccionEnSala()
   }
 
   method entrarA(sala) {
@@ -262,12 +270,12 @@ object director {
         jugador.position(destino)
         salaActual.jugadorSeMovio(destino)
       }
-    }
+    } 
   }
 
   method perderVida() {
-    jugador.vidas(jugador.vidas() - 1)
-    if (jugador.vidas() <= 0) {
+    jugador.perderVida()
+    if (jugador.seQuedoSinVidas()) {
       self.gameOver()          // te quedaste sin vidas: perdés el juego
     } else {
       self.irA(salaPrincipal)  // todavía tenés vidas: volvés al hall (menú)
