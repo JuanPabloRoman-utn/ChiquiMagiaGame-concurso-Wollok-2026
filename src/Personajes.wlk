@@ -110,39 +110,26 @@ class Archivero {
   }
 }
 
-// ---------- Minijuego 4: Chiqui Mafia y Proyectiles ----------
+// ---------- Minijuego 5: Chiqui Mafia ----------
 
 object chiqui {
-  var property position = game.at(9, 10)
+  var property position = game.at(10, 10)
   var property image = "img/Chiqui.png"
-  var property vidas = 5
 
   method reset() {
-    vidas = 5
-    position = game.at(9, 10)
+    position = game.at(10, 10)
   }
 
-  method recibirDenuncia() {
-    vidas = vidas - 1
-  }
-
-  method estaDerrotado() = vidas <= 0
-}
-
-class Choripan {
-  var property position
-  const property image = "img/Chori.png"
-
-  method moverAbajo() {
-    position = position.down(1)
-  }
-}
-
-class Denuncia {
-  var property position
-  const property image = "img/Denuncia.png"
-
-  method moverArriba() {
-    position = position.up(1)
+  // Da un paso acercándose hacia una posición objetivo (primero en X, luego en Y).
+  method acercarseA(objetivo) {
+    if (position.x() < objetivo.x()) {
+      position = position.right(1)
+    } else if (position.x() > objetivo.x()) {
+      position = position.left(1)
+    } else if (position.y() < objetivo.y()) {
+      position = position.up(1)
+    } else if (position.y() > objetivo.y()) {
+      position = position.down(1)
+    }
   }
 }

@@ -14,8 +14,7 @@ program juego {
   // Para volver al flujo normal: borrar el onTick "autoPelado" de abajo.
   // [RAMA test/pelado-directo] Arranca DIRECTO en la cancha del Pelado para probarlo.
   // Para volver al flujo normal: usar director.mostrarMenu() en vez de las dos lineas de abajo.
-  director.reiniciarDatos()
-  director.entrarA(salaPelado)
+  director.mostrarMenu()
   keyboard.enter().onPressDo({ director.confirmar() })
 
   // Movimiento casilla por casilla (WASD). El director maneja todo.
@@ -24,12 +23,6 @@ program juego {
   keyboard.a().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.left(1) }) })
   keyboard.d().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.right(1) }) })
   
-  // --- Mecánica de Disparo (Minijuego Chiqui) ---
-  keyboard.space().onPressDo({
-    if (director.salaActual() == salaChiqui) {
-      minijuegoChiqui.dispararDenuncia()
-    }
-  })
 
   // --- Teclas de modo test (solo sirven si config.debug = true) ---
   // T/B/C/K: saltar directo a Toviggino / Beligoy / Caruso / Chiqui. U: completar todo y volver al hall.

@@ -449,111 +449,102 @@ object minijuegoPelado {
   }
 }
 
-// ---------- Minijuego 5 (final): El Chiqui Mafia ----------
+// ---------- Minijuego 5 (final): El Chiqui Mafia ---------
+
 object minijuegoChiqui {
+  const pruebasParaGanar = 5
+  const pruebasParaPerder = 2
+  var pruebasJugador = 0
+  var pruebasChiqui = 0
+  var pruebaActual = null
   var property completado = false
-  var choripanes = []
-  var denuncias = []
 
   method iniciar() {
     completado = false
-    choripanes = []
-    denuncias = []
+    pruebasJugador = 0
+    pruebasChiqui = 0
     chiqui.reset()
-
     if (not game.hasVisual(chiqui)) { game.addVisual(chiqui) }
-
-    game.say(jugador, "Llego la hora! Disparale 5 denuncias con ESPACIO!")
-
-    // Ticks para proyectiles y movimiento del Chiqui
-    game.onTick(800, "generarChori", { self.generarChoripan() })
-    game.onTick(200, "moverProyectiles", { self.actualizarProyectiles() })
-    game.onTick(700, "moverChiqui", { self.moverChiqui() }) // <-- Chiqui más lento (cada 700ms)
+    game.say(jugador, "Agarra 5 pruebas antes de que el Chiqui destruya 2!")
+    self.generarNuevaPrueba()
+    game.onTick(380, "chiquiMueve", { self.turnoChiqui() })
   }
 
   method terminar() {
-    game.removeTickEvent("generarChori")
-    game.removeTickEvent("moverProyectiles")
-    game.removeTickEvent("moverChiqui") // <-- Limpiamos el tick
-    
-    choripanes.forEach({ c => if (game.hasVisual(c)) game.removeVisual(c) })
-    denuncias.forEach({ d => if (game.hasVisual(d)) game.removeVisual(d) })
-    if (game.hasVisual(chiqui)) game.removeVisual(chiqui)
-    
-    choripanes = []
-    denuncias = []
+    game.removeTickEvent("chiquiMueve")
+    if (pruebaActual != null and game.hasVisual(pruebaActual)) {
+      game.removeVisual(pruebaActual)
+    }
+    pruebaActual = null
+    if (game.hasVisual(chiqui)) { game.removeVisual(chiqui) }
   }
 
-  method moverChiqui() {
-    // Se mueve de forma independiente y más pausada
-    const nuevaX = (1 .. (game.width() - 2)).anyOne()
-    chiqui.position(game.at(nuevaX, 10))
+  method mismaCelda(a, b) = a.x() == b.x() and a.y() == b.y()
+
+  // Busca una celda libre que no esté ocupada ni por el jugador ni por el Chiqui.
+  method posicionAleatoriaLibre() {
+    const x = (1 .. (game.width() - 2)).anyOne()
+    const y = (1 .. (game.height() - 2)).anyOne()
+    const pos = game.at(x, y)
+    if (not self.mismaCelda(pos, jugador.position()) and not self.mismaCelda(pos, chiqui.position())) {
+      return pos
+    } else {
+      return self.posicionAleatoriaLibre()
+    }
   }
 
-  method generarChoripan() {
-    const xAleatoria = (1 .. (game.width() - 2)).anyOne()
-    const chori = new Choripan(position = game.at(xAleatoria, 9))
-    choripanes.add(chori)
-    game.addVisual(chori)
+  method generarNuevaPrueba() {
+    if (pruebaActual != null and game.hasVisual(pruebaActual)) {
+      game.removeVisual(pruebaActual)
+    }
+    const pos = self.posicionAleatoriaLibre()
+    pruebaActual = new Imagen(position = pos, image = "img/Prueba.png")
+    game.addVisual(pruebaActual)
   }
 
-  method dispararDenuncia() {
-    const posDisparo = jugador.position().up(1)
-    const denuncia = new Denuncia(position = posDisparo)
-    denuncias.add(denuncia)
-    game.addVisual(denuncia)
-  }
-
-  method actualizarProyectiles() {
-    // 1. Mover Choripanes abajo y chequear colisión con jugador
-    choripanes.map({ c => c }).forEach({ c =>
-      c.moverAbajo()
-      if (c.position().x() == jugador.position().x() and c.position().y() == jugador.position().y()) {
-        self.removerChoripan(c)
-        director.perderVida()
-      } else if (c.position().y() <= 0) {
-        self.removerChoripan(c)
+  // El Chiqui avanza un paso hacia la prueba actual y revisa si la agarró.
+  method turnoChiqui() {
+    if (director.salaActual() == salaChiqui and pruebaActual != null) {
+      chiqui.acercarseA(pruebaActual.position())
+      if (self.mismaCelda(chiqui.position(), pruebaActual.position())) {
+        self.chiquiAgarroPrueba()
       }
-    })
-
-    // 2. Mover Denuncias arriba y chequear colisión con Chiqui
-    denuncias.map({ d => d }).forEach({ d =>
-      d.moverArriba()
-      if (d.position().x() == chiqui.position().x() and d.position().y() >= chiqui.position().y()) {
-        self.removerDenuncia(d)
-        chiqui.recibirDenuncia()
-        game.say(chiqui, "Auch! Vidas: " + chiqui.vidas().toString())
-        if (chiqui.estaDerrotado()) {
-          self.ganar()
-        }
-      } else if (d.position().y() >= game.height() - 1) {
-        self.removerDenuncia(d)
-      }
-    })
+    }
   }
 
-  method removerChoripan(chori) {
-    if (game.hasVisual(chori)) game.removeVisual(chori)
-    choripanes.remove(chori)
-  }
-
-  method removerDenuncia(denuncia) {
-    if (game.hasVisual(denuncia)) game.removeVisual(denuncia)
-    denuncias.remove(denuncia)
-  }
-
+  // Cada vez que se mueve el jugador, revisamos si agarró la prueba.
   method jugadorSeMovio(pos) {
-    const choriTocado = choripanes.findOrDefault({ c => c.position().x() == pos.x() and c.position().y() == pos.y() }, null)
-    if (choriTocado != null) {
-      self.removerChoripan(choriTocado)
-      director.perderVida()
+    if (pruebaActual != null and self.mismaCelda(pos, pruebaActual.position())) {
+      self.jugadorAgarroPrueba()
+    }
+  }
+
+  method jugadorAgarroPrueba() {
+    pruebasJugador = pruebasJugador + 1
+    if (pruebasJugador >= pruebasParaGanar) {
+      self.ganar()
+    } else {
+      game.say(jugador, "Prueba " + pruebasJugador.toString() + "/" + pruebasParaGanar.toString() + "!")
+      self.generarNuevaPrueba()
+    }
+  }
+
+  method chiquiAgarroPrueba() {
+    pruebasChiqui = pruebasChiqui + 1
+    if (pruebasChiqui >= pruebasParaPerder) {
+      game.say(chiqui, "Destrui las pruebas! Ganamos los mismos de siempre!")
+      director.gameOver()
+    } else {
+      game.say(chiqui, "Destrui " + pruebasChiqui.toString() + "/" + pruebasParaPerder.toString() + " pruebas!")
+      self.generarNuevaPrueba()
     }
   }
 
   method ganar() {
-    // El Chiqui es el juicio final (atraparlo con todas las pruebas), no suma prueba.
-    completado = true
-    game.say(jugador, "Derrotaste al Chiqui Mafia! Salvaste al futbol!")
-    director.completarJuego()
+    if (not completado) {
+      completado = true
+      game.say(jugador, "Derrotaste al Chiqui Mafia! Salvaste al futbol!")
+      director.completarJuego()
+    }
   }
 }
