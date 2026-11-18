@@ -52,11 +52,12 @@ object salaPrincipal inherits Sala {
   override method fondo() = "img/FondoAFA.png"
   override method posicionInicial() = game.at(9, 2)   // abajo, sobre la alfombra
 
-  // Progresión: Toviggino (puerta x=7) -> Beligoy (puerta x=12) -> Chiqui (puerta central x=9).
+  // Progresión: Toviggino (x=7) -> Beligoy (x=12) -> Pelado (x=9). El Chiqui NO es
+  // puerta del menú: se llega desde la pantalla de juicio final (tras ganar el Pelado).
   override method salidas() =
     if (not minijuegoToviggino.completado()) [ new Salida(x = 7, y = 8, destino = salaToviggino) ]
     else if (not minijuegoBeligoy.completado()) [ new Salida(x = 12, y = 8, destino = salaBeligoy) ]
-    else if (not minijuegoChiqui.completado()) [ new Salida(x = 9, y = 8, destino = salaChiqui) ]
+    else if (not minijuegoPelado.completado()) [ new Salida(x = 9, y = 8, destino = salaPelado) ]
     else []
 
   // Vitrinas de las paredes laterales (x1, x18) y pared del fondo con las puertas (y>=9).
@@ -196,6 +197,10 @@ object director {
   method entrarA(sala) {
     estado = estadoJugando
     if (salaActual != null) { salaActual.alSalir() }
+    // OJO: no llamar limpiarTicks aca. iniciar() re-registra sus ticks en esta misma
+    // llamada y el motor rompe si se hace removeTickEvent + onTick del mismo nombre en
+    // el mismo frame (congela el minijuego). La limpieza se hace en mostrarPantalla
+    // (pantalla de instrucciones previa a cada minijuego), que si limpia lo acumulado.
     // Limpieza segura: copio la lista antes de borrar (no itero la lista viva).
     game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
     indicadores.clear()
@@ -232,9 +237,16 @@ object director {
     })
   }
 
+  // Quita todos los ticks de minijuegos (defensa contra acumulacion al reentrar/reiniciar).
+  method limpiarTicks() {
+    ["tovGira", "tovTimer", "caruPatron", "beliTimer", "pelaPersigue",
+     "diMariaAnim", "peladoAnim", "chiquiMueve"].forEach({ t => game.removeTickEvent(t) })
+  }
+
   // Limpia la pantalla y deja un fondo de pantalla completa (menú / cartel).
   method mostrarPantalla(imagen, nuevoEstado) {
     if (salaActual != null) { salaActual.alSalir() }
+    self.limpiarTicks()
     estado = nuevoEstado
     salaActual = null
     indicadores.clear()
@@ -318,14 +330,14 @@ object director {
   // Atajo de test: saltar directo a la cancha del Pelado desde el menu limpio.
   method irAlLaberinto() {
     if (config.debug) {
-      self.mostrarMenu()
       self.reiniciarDatos()
-      self.entrarA(salaPelado)
+      self.irA(salaPelado)   // via instrucciones (el entrarA directo daba error)
     }
   }
 }
 
 // Pantalla de juicio final: ENTER entra directo al Chiqui.
 object estadoJuicioFinal inherits Estado {
-  override method confirmar(){ director.entrarA(salaChiqui) }
+  // irA (no entrarA) para que muestre las instrucciones del Chiqui antes de jugar.
+  override method confirmar(){ director.irA(salaChiqui) }
 }
