@@ -43,8 +43,12 @@ class Sala {
 }
 
 class SalaMinijuego inherits Sala {
+    const property minijuego
     method imagenInstrucciones()
     override method tieneInstrucciones() = true
+    override method alEntrar() { minijuego.iniciar() }
+    override method alSalir() { minijuego.terminar() }
+    override method jugadorSeMovio(pos) { minijuego.jugadorSeMovio(pos) } 
 }
 
 // Hall de la AFA. La puerta habilitada depende de en qué paso del juego estás.
@@ -85,59 +89,48 @@ object salaPatio inherits Sala {
 }
 
 // Minijuego 1 - Toviggino. Entrás abajo (al lado de la puerta) y subís al escritorio.
-object salaToviggino inherits SalaMinijuego {
-  override method fondo() = "img/salaTovi.png"
+object salaToviggino inherits SalaMinijuego(minijuego = minijuegoToviggino) {
+  override method fondo() = "img/SalaToviggino.png"
   override method imagenInstrucciones() = "img/InstruccionesToviggino.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = [ new Salida(x = 10, y = 1, destino = salaPrincipal) ]
-  override method alEntrar() { minijuegoToviggino.iniciar() }
-  override method alSalir() { minijuegoToviggino.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoToviggino.jugadorSeMovio(pos) }
 }
+
 
 // Minijuego 2 - Caruso preso. Está en la otra punta; para llegar hay que resolver
 // el "camino oculto": solo ciertas baldosas son seguras (patrón escalera).
-object salaCaruso inherits SalaMinijuego {
+object salaCaruso inherits SalaMinijuego(minijuego = minijuegoCaruso) {
   override method fondo() = "img/SalaCaruso.png"
   override method imagenInstrucciones() = "img/InstruccionesCaruso.png"
   override method posicionInicial() = minijuegoCaruso.posInicial()
   override method salidas() = []   // se gana resolviendo el camino hasta Caruso
-  override method alEntrar() { minijuegoCaruso.iniciar() }
-  override method alSalir() { minijuegoCaruso.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoCaruso.jugadorSeMovio(pos) }
 }
 
+
 // Minijuego 3 - Beligoy. Beligoy salió un rato: revisá su archivo antes de que vuelva (30s).
-object salaBeligoy inherits SalaMinijuego {
+object salaBeligoy inherits SalaMinijuego(minijuego = minijuegoBeligoy) {
   override method fondo() = "img/SalaBeligoy.png"
   override method imagenInstrucciones() = "img/InstruccionesBeligoy.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = []   // se gana encontrando los expedientes; se pierde si se acabó el tiempo
-  override method alEntrar() { minijuegoBeligoy.iniciar() }
-  override method alSalir() { minijuegoBeligoy.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoBeligoy.jugadorSeMovio(pos) }
 }
 
+
 // Minijuego final - Chiqui Mafia (el juicio final).
-object salaChiqui inherits SalaMinijuego {
-  override method fondo() = "img/fondoJuicio.png"
+object salaChiqui inherits SalaMinijuego(minijuego = minijuegoChiqui) {
+  override method fondo() = "img/FondoAFA_tmp.png"
   override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
   override method posicionInicial() = game.at(10, 1)   // Abajo al centro
   override method salidas() = []
-  override method alEntrar() { minijuegoChiqui.iniciar() }
-  override method alSalir() { minijuegoChiqui.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoChiqui.jugadorSeMovio(pos) }
 }
 
+
 // Minijuego 4 - Pelado Bicampeon + Di Maria (persecucion en la cancha).
-object salaPelado inherits SalaMinijuego {
+object salaPelado inherits SalaMinijuego(minijuego = minijuegoPelado) {
   override method fondo() = "img/CanchaFutbol.png"   // cancha abierta
   override method imagenInstrucciones() = "img/InstruccionesPelado.png"
   override method posicionInicial() = game.at(1, 1)
   override method salidas() = []   // se gana llegando a Di Maria
-  override method alEntrar() { minijuegoPelado.iniciar() }
-  override method alSalir() { minijuegoPelado.terminar() }
-  override method jugadorSeMovio(pos) { minijuegoPelado.jugadorSeMovio(pos) }
   // Cancha con barrera: bordes + la fila-barrera con hueco central.
   override method estaLibre(pos) = super(pos) and not minijuegoPelado.esBarrera(pos)
 }
@@ -285,8 +278,7 @@ object director {
   
   // Reiniciar vidas y progreso
   method reiniciarDatos(){
-    jugador.vidas(2)
-    jugador.pruebas(0)
+    jugador.reiniciar()
     minijuegoBeligoy.completado(false)
     minijuegoCaruso.completado(false)
     minijuegoToviggino.completado(false)
@@ -320,7 +312,7 @@ object director {
 
   method perderVida() {
     game.sound("sounds/perdervida.mp3").play()
-    jugador.vidas(jugador.vidas() - 1)
+    jugador.perderVida()
     if (jugador.vidas() <= 0) {
       self.gameOver()          // te quedaste sin vidas: perdés el juego
     } else {

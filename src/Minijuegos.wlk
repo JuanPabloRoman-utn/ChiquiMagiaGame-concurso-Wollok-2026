@@ -97,7 +97,7 @@ object minijuegoToviggino {
         // Minijuego completado: suma 1 prueba y vas DIRECTO a la cárcel de Caruso.
         completado = true
         game.sound("sounds/pasarNivel.mp3").play()
-        jugador.pruebas(jugador.pruebas() + 1)
+        jugador.conseguirPrueba()
         game.say(jugador, "Prueba conseguida! Vamos con Caruso")
         director.irA(salaCaruso)
       } else {
@@ -219,7 +219,7 @@ object minijuegoCaruso {
     if (not completado) {
       completado = true
       game.sound("sounds/pasarNivel.mp3").play()
-      jugador.pruebas(jugador.pruebas() + 1)
+      jugador.conseguirPrueba()
       game.say(jugador, "Liberaste a Caruso! Te dio una prueba")
     }
     director.irA(salaPrincipal)
@@ -293,7 +293,7 @@ object minijuegoBeligoy {
     if (encontrados >= totalArreglos and not completado) {
       completado = true
       game.sound("sounds/pasarNivel.mp3").play()
-      jugador.pruebas(jugador.pruebas() + 1)
+      jugador.conseguirPrueba()
       game.say(jugador, "Conseguiste los expedientes de Barracas!")
       director.irA(salaPrincipal)
     }
@@ -385,7 +385,7 @@ object minijuegoPelado {
 
   method atrapado() {
     game.say(jugador, "Te agarro el Pelado!")
-    jugador.vidas(jugador.vidas() - 1)
+    jugador.perderVida()
     if (jugador.vidas() <= 0) {
       director.gameOver()          // sin vidas: perdiste el juego
     } else {
@@ -405,7 +405,7 @@ object minijuegoPelado {
     if (not completado) {
       completado = true
       game.sound("sounds/pasarNivel.mp3").play()
-      jugador.pruebas(jugador.pruebas() + 1)
+      jugador.conseguirPrueba()
       game.say(jugador, "Agarraste la prueba del arreglo Di Maria-Chiqui!")
       director.mostrarSlides(
         ["img/Historia1.png", "img/Historia2.png", "img/Historia3.png"],

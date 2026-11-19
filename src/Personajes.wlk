@@ -4,13 +4,25 @@ import wollok.game.*
 object jugador {
   var property position = game.at(10, 6)
   var property image = "img/LuchoFrente.png"
-  var property vidas = 2
-  var property pruebas = 0   // inventario: pruebas conseguidas (minijuegos completados)
+  const vidasIniciales = 2
+  var vidas = vidasIniciales
+  var pruebas = 0   // inventario: pruebas conseguidas (minijuegos completados)
 
   // Cambia el sprite según la dirección: de espaldas cuando sube, de frente si no.
   method mirar(haciaArriba) {
     if (haciaArriba) { image = "img/LuchoEspaldas.png" }
     else { image = "img/LuchoFrente.png" }
+  }
+
+  method vidas() = vidas
+  method pruebas() = pruebas
+  method perderVida(){vidas -= 1}
+  method seQuedoSinVidas(){return vidas == 0}
+  method conseguirPrueba() {pruebas += 1}
+
+  method reiniciar() {
+    vidas = vidasIniciales
+    pruebas = 0
   }
 }
 
