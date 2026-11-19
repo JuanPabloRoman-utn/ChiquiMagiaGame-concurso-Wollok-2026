@@ -240,6 +240,22 @@ object director {
     }
   }
 
+  // Cambia SOLO el fondo de la sala actual, sin reiniciar el minijuego.
+  // Redibuja fondo nuevo + salidas + jugador + HUD en el orden de capas correcto.
+  // Los sprites propios del minijuego (ej: toviggino) los re-agrega quien llama.
+  method cambiarFondo(nuevoFondo) {
+    game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
+    indicadores.clear()
+    game.addVisual(new Imagen(position = game.at(0,0), image = nuevoFondo))
+    salaActual.salidas().forEach({ unaSalida =>
+      const flecha = new Imagen(position = game.at(unaSalida.x(), unaSalida.y()), image = "img/FlechaVerde.png")
+      indicadores.add(flecha)
+      game.addVisual(flecha)
+    })
+    if (not game.hasVisual(jugador)) { game.addVisual(jugador) }
+    self.dibujarHud()
+  }
+
   method titilar() {
     indicadores.forEach({ indicador =>
       if (game.hasVisual(indicador)) game.removeVisual(indicador) else game.addVisual(indicador)
@@ -303,6 +319,7 @@ object director {
   }
 
   method perderVida() {
+    game.sound("sounds/perdervida.mp3").play()
     jugador.vidas(jugador.vidas() - 1)
     if (jugador.vidas() <= 0) {
       self.gameOver()          // te quedaste sin vidas: perdés el juego

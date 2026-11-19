@@ -11,6 +11,7 @@ object minijuegoToviggino {
   var pruebas = []
   var escapando = false
   var segundos = 0
+  var sonidoEscape = null
   var property completado = false
 
   method posicionAleatoria() {
@@ -61,6 +62,7 @@ object minijuegoToviggino {
   method terminar() {
     game.removeTickEvent("tovGira")
     game.removeTickEvent("tovTimer")
+    if (sonidoEscape != null) { sonidoEscape.stop() }
     pruebas.forEach({ prueba => if (game.hasVisual(prueba)) game.removeVisual(prueba) })
   }
 
@@ -78,6 +80,10 @@ object minijuegoToviggino {
       if (game.hasVisual(prueba) and prueba.position().x() == pos.x() and prueba.position().y() == pos.y()) {
         game.removeVisual(prueba)
         pruebasAgarradas = pruebasAgarradas + 1
+        // En la 3ra prueba no suena este (suena el de puerta abierta en empezarEscape).
+        if (pruebasAgarradas < pruebasTotales) {
+          game.sound("sounds/agarrarPrueba.mp3").play()
+        }
       }
     })
     if (pruebasAgarradas >= pruebasTotales and not escapando) {
@@ -90,6 +96,7 @@ object minijuegoToviggino {
       if (pruebasAgarradas >= pruebasTotales) {
         // Minijuego completado: suma 1 prueba y vas DIRECTO a la cárcel de Caruso.
         completado = true
+        game.sound("sounds/pasarNivel.mp3").play()
         jugador.pruebas(jugador.pruebas() + 1)
         game.say(jugador, "Prueba conseguida! Vamos con Caruso")
         director.irA(salaCaruso)
@@ -102,6 +109,13 @@ object minijuegoToviggino {
   method empezarEscape() {
     escapando = true
     segundos = 12
+    // Sonido de puerta abierta PRIMERO (una sola vez, sin loop), antes de redibujar.
+    sonidoEscape = game.sound("sounds/audioEscape.mp3")
+    sonidoEscape.play()
+    // Cambia el fondo a la version con la PUERTA ABIERTA (ya conseguiste las 3 pruebas).
+    director.cambiarFondo("img/salaToviAbierta.png")
+    // cambiarFondo saca todos los visuales: vuelvo a poner a Toviggino encima del fondo nuevo.
+    if (not game.hasVisual(toviggino)) { game.addVisual(toviggino) }
     game.say(jugador, segundos.toString() + "s para salir!")
     game.onTick(1000, "tovTimer", { self.tick() })
   }
@@ -204,6 +218,7 @@ object minijuegoCaruso {
   method liberar() {
     if (not completado) {
       completado = true
+      game.sound("sounds/pasarNivel.mp3").play()
       jugador.pruebas(jugador.pruebas() + 1)
       game.say(jugador, "Liberaste a Caruso! Te dio una prueba")
     }
@@ -266,6 +281,7 @@ object minijuegoBeligoy {
         archivero.revisar()
         if (archivero.tieneExpediente()) {
           encontrados = encontrados + 1
+          game.sound("sounds/agarrarPrueba.mp3").play()
           game.say(jugador, resultadosArreglo.anyOne())
         } else {
           segundos = segundos - 5
@@ -276,6 +292,7 @@ object minijuegoBeligoy {
     })
     if (encontrados >= totalArreglos and not completado) {
       completado = true
+      game.sound("sounds/pasarNivel.mp3").play()
       jugador.pruebas(jugador.pruebas() + 1)
       game.say(jugador, "Conseguiste los expedientes de Barracas!")
       director.irA(salaPrincipal)
@@ -387,6 +404,7 @@ object minijuegoPelado {
   method ganar() {
     if (not completado) {
       completado = true
+      game.sound("sounds/pasarNivel.mp3").play()
       jugador.pruebas(jugador.pruebas() + 1)
       game.say(jugador, "Agarraste la prueba del arreglo Di Maria-Chiqui!")
       director.mostrarSlides(
@@ -502,6 +520,7 @@ object minijuegoChiqui {
   method ganar() {
     if (not completado) {
       completado = true
+      game.sound("sounds/pasarNivel.mp3").play()
       game.say(jugador, "Derrotaste al Chiqui Mafia! Salvaste al futbol!")
       director.completarJuego()
     }
