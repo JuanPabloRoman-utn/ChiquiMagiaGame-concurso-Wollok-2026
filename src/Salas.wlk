@@ -98,7 +98,7 @@ object salaToviggino inherits SalaMinijuego {
 // Minijuego 2 - Caruso preso. Está en la otra punta; para llegar hay que resolver
 // el "camino oculto": solo ciertas baldosas son seguras (patrón escalera).
 object salaCaruso inherits SalaMinijuego {
-  override method fondo() = "img/salaCaruso.png"
+  override method fondo() = "img/SalaCaruso.png"
   override method imagenInstrucciones() = "img/InstruccionesCaruso.png"
   override method posicionInicial() = minijuegoCaruso.posInicial()
   override method salidas() = []   // se gana resolviendo el camino hasta Caruso
