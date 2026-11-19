@@ -86,7 +86,7 @@ object salaPatio inherits Sala {
 
 // Minijuego 1 - Toviggino. Entrás abajo (al lado de la puerta) y subís al escritorio.
 object salaToviggino inherits SalaMinijuego {
-  override method fondo() = "img/SalaToviggino.png"
+  override method fondo() = "img/salaTovi.png"
   override method imagenInstrucciones() = "img/InstruccionesToviggino.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = [ new Salida(x = 10, y = 1, destino = salaPrincipal) ]
@@ -98,7 +98,7 @@ object salaToviggino inherits SalaMinijuego {
 // Minijuego 2 - Caruso preso. Está en la otra punta; para llegar hay que resolver
 // el "camino oculto": solo ciertas baldosas son seguras (patrón escalera).
 object salaCaruso inherits SalaMinijuego {
-  override method fondo() = "img/SalaCaruso.png"
+  override method fondo() = "img/salaCaruso.png"
   override method imagenInstrucciones() = "img/InstruccionesCaruso.png"
   override method posicionInicial() = minijuegoCaruso.posInicial()
   override method salidas() = []   // se gana resolviendo el camino hasta Caruso
@@ -120,7 +120,7 @@ object salaBeligoy inherits SalaMinijuego {
 
 // Minijuego final - Chiqui Mafia (el juicio final).
 object salaChiqui inherits SalaMinijuego {
-  override method fondo() = "img/FondoAFA_tmp.png"
+  override method fondo() = "img/fondoJuicio.png"
   override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
   override method posicionInicial() = game.at(10, 1)   // Abajo al centro
   override method salidas() = []
