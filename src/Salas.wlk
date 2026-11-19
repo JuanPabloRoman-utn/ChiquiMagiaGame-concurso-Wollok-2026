@@ -188,6 +188,15 @@ object director {
   var estado = estadoMenu   // "menu" | "jugando" | "cartel"
   const indicadores = []
 
+  // Muestra una secuencia de imágenes tipo slide; al terminar ejecuta 'alTerminar'.
+  method mostrarSlides(imagenes, alTerminar) {
+    self.mostrarPantalla(imagenes.first(), new EstadoSlide(
+      imagenes = imagenes,
+      indiceActual = 0,
+      alTerminar = alTerminar
+    ))
+  }
+
 
   method irA(sala){
     if (sala.tieneInstrucciones()) { self.mostrarInstrucciones(sala) }
@@ -340,4 +349,23 @@ object director {
 object estadoJuicioFinal inherits Estado {
   // irA (no entrarA) para que muestre las instrucciones del Chiqui antes de jugar.
   override method confirmar(){ director.irA(salaChiqui) }
+}
+
+class EstadoSlide inherits Estado {
+  const imagenes
+  const indiceActual
+  const alTerminar
+
+  override method confirmar() {
+    const siguiente = indiceActual + 1
+    if (siguiente < imagenes.size()) {
+      director.mostrarPantalla(imagenes.get(siguiente), new EstadoSlide(
+        imagenes = imagenes,
+        indiceActual = siguiente,
+        alTerminar = alTerminar
+      ))
+    } else {
+      alTerminar.apply()
+    }
+  }
 }

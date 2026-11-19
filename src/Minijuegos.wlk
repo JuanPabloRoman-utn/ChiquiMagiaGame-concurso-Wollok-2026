@@ -389,7 +389,10 @@ object minijuegoPelado {
       completado = true
       jugador.pruebas(jugador.pruebas() + 1)
       game.say(jugador, "Agarraste la prueba del arreglo Di Maria-Chiqui!")
-      director.mostrarJuicioFinal()
+      director.mostrarSlides(
+        ["img/Historia1.png", "img/Historia2.png", "img/Historia3.png"],
+        { director.mostrarJuicioFinal() }
+      )
     }
   }
 }
