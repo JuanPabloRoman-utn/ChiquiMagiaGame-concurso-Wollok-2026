@@ -447,20 +447,29 @@ object minijuegoChiqui {
     game.addVisual(pruebaActual)
   }
 
-  // El Chiqui avanza un paso hacia la prueba actual y revisa si la agarró.
+  // El Chiqui avanza un paso hacia la prueba actual y revisa choque o prueba.
   method turnoChiqui() {
     if (director.salaActual() == salaChiqui and pruebaActual != null) {
       chiqui.acercarseA(pruebaActual.position())
-      if (self.mismaCelda(chiqui.position(), pruebaActual.position())) {
+      self.chequearChoque()
+      if (pruebaActual != null and self.mismaCelda(chiqui.position(), pruebaActual.position())) {
         self.chiquiAgarroPrueba()
       }
     }
   }
 
-  // Cada vez que se mueve el jugador, revisamos si agarró la prueba.
+  // Cada vez que se mueve el jugador, revisamos choque o si agarró la prueba.
   method jugadorSeMovio(pos) {
-    if (pruebaActual != null and self.mismaCelda(pos, pruebaActual.position())) {
+    self.chequearChoque()
+    if (director.salaActual() == salaChiqui and pruebaActual != null and self.mismaCelda(pos, pruebaActual.position())) {
       self.jugadorAgarroPrueba()
+    }
+  }
+
+  method chequearChoque() {
+    if (self.mismaCelda(jugador.position(), chiqui.position())) {
+      game.say(chiqui, "Te toco el Chiqui! Perdiste de una!")
+      director.gameOver()
     }
   }
 
