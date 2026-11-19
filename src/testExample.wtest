@@ -166,3 +166,79 @@ describe "minijuego Caruso" {
     assert.equals(salaPrincipal, director.salaActual())
   }
 }
+
+//tests minujuego del chiqui
+describe "minijuego Chiqui" {
+
+  method initialize() {
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaChiqui)
+  }
+
+  method posicionPruebaActual() =
+    game.allVisuals().find({ visual => visual.image() == "img/Prueba.png" }).position()
+
+  test "agarrar una prueba suma progreso y genera una nueva prueba" {
+    const posPrueba = self.posicionPruebaActual()
+    minijuegoChiqui.jugadorSeMovio(posPrueba)
+
+    assert.equals(game.at(posPrueba.x(), posPrueba.y()), jugador.position())
+    assert.notThat(minijuegoChiqui.completado())
+    assert.equals(posPrueba, jugador.position())
+  }
+
+  test "agarrar 5 pruebas completa el minijuego y lleva a la pantalla de victoria" {
+    (1 .. 5).forEach({ i =>
+      const posPrueba = self.posicionPruebaActual()
+      jugador.position(posPrueba)
+      minijuegoChiqui.jugadorSeMovio(posPrueba)
+    })
+
+    assert.that(minijuegoChiqui.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "si el Chiqui agarra 2 pruebas se dispara game over y se reinician los datos" {
+    minijuegoToviggino.completado(true)
+    jugador.pruebas(1)
+
+    (1 .. 2).forEach({ i =>
+      const posPrueba = self.posicionPruebaActual()
+      chiqui.position(posPrueba)
+      minijuegoChiqui.turnoChiqui()
+    })
+
+    assert.equals(0, jugador.pruebas())
+    assert.equals(2, jugador.vidas())
+    assert.notThat(minijuegoToviggino.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "tocar al Chiqui hace perder automaticamente y reinicia el juego" {
+    minijuegoCaruso.completado(true)
+    jugador.pruebas(1)
+    chiqui.position(game.at(8, 8))
+
+    minijuegoChiqui.jugadorSeMovio(game.at(8, 8))
+
+    assert.equals(0, jugador.pruebas())
+    assert.equals(2, jugador.vidas())
+    assert.notThat(minijuegoCaruso.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "el Chiqui se acerca paso a paso hacia la prueba actual" {
+    const posPrueba = self.posicionPruebaActual()
+    chiqui.position(game.at(2, 2))
+    const distanciaInicial = (chiqui.position().x() - posPrueba.x()).abs() +
+                             (chiqui.position().y() - posPrueba.y()).abs()
+
+    minijuegoChiqui.turnoChiqui()
+
+    const distanciaNueva = (chiqui.position().x() - posPrueba.x()).abs() +
+                           (chiqui.position().y() - posPrueba.y()).abs()
+    assert.that(distanciaNueva < distanciaInicial)
+  }
+}
