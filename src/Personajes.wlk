@@ -114,10 +114,21 @@ class Archivero {
 
 object chiqui {
   var property position = game.at(10, 10)
-  var property image = "img/Chiqui.png"
+  var property image = "img/chiqui_tapia_frame_1_64x64.png"
+  var enUno = true
 
   method reset() {
     position = game.at(10, 10)
+  }
+
+  // Alterna entre los dos frames para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) {
+      image = "img/chiqui_tapia_frame_1_64x64.png"
+    } else {
+      image = "img/chiqui_tapia_frame_2_64x64.png"
+    }
   }
 
   // Da un paso acercándose hacia una posición objetivo (primero en X, luego en Y).

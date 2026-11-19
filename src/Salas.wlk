@@ -249,7 +249,7 @@ object director {
   // Quita todos los ticks de minijuegos (defensa contra acumulacion al reentrar/reiniciar).
   method limpiarTicks() {
     ["tovGira", "tovTimer", "caruPatron", "beliTimer", "pelaPersigue",
-     "diMariaAnim", "peladoAnim", "chiquiMueve"].forEach({ t => game.removeTickEvent(t) })
+     "diMariaAnim", "peladoAnim", "chiquiMueve", "chiquiAnim"].forEach({ t => game.removeTickEvent(t) })
   }
 
   // Limpia la pantalla y deja un fondo de pantalla completa (menú / cartel).

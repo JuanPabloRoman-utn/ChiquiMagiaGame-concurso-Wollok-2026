@@ -306,7 +306,7 @@ object minijuegoPelado {
     sonido = game.sound("sounds/Pelado-Bicampeon.mp3")
     sonido.shouldLoop(true)
     sonido.play()
-    game.onTick(493, "pelaPersigue", { self.moverPelado() })   // +10% de velocidad (542 -> 493 ms)
+    game.onTick(468, "pelaPersigue", { self.moverPelado() })   // un toque mas rapido (493 -> 468 ms)
     game.onTick(350, "diMariaAnim", { diMaria.animar() })      // anima a Di Maria
     game.onTick(300, "peladoAnim", { pelado.animar() })        // anima al Pelado
   }
@@ -415,11 +415,13 @@ object minijuegoChiqui {
     if (not game.hasVisual(chiqui)) { game.addVisual(chiqui) }
     game.say(jugador, "Agarra 5 pruebas antes de que el Chiqui destruya 2!")
     self.generarNuevaPrueba()
-    game.onTick(380, "chiquiMueve", { self.turnoChiqui() })
+    game.onTick(360, "chiquiMueve", { self.turnoChiqui() })    // un toque mas rapido (380 -> 360 ms)
+    game.onTick(300, "chiquiAnim", { chiqui.animar() })        // anima al Chiqui
   }
 
   method terminar() {
     game.removeTickEvent("chiquiMueve")
+    game.removeTickEvent("chiquiAnim")
     if (pruebaActual != null and game.hasVisual(pruebaActual)) {
       game.removeVisual(pruebaActual)
     }
