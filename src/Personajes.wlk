@@ -13,9 +13,13 @@ object jugador {
     else { image = "img/LuchoFrente.png" }
   }
 
-  method perderVida(){vidas -= 1}
+  method perderVida(){
+    game.sound("sounds/perdervida.mp3").play()  
+    vidas -= 1
+  }
   method seQuedoSinVidas(){return vidas == 0}
-
+  method reiniciarVidas() {vidas = 2}
+  method reiniciarPruebas() {pruebas = 0}
   
 }
 
@@ -56,7 +60,44 @@ object toviggino {
 
 class Imagen {
   const property position
-  const property image  
+  const property image
+}
+
+// ---------- Minijuego 4 (previo al Chiqui): Pelado Bicampeon y Di Maria ----------
+// Di Maria esta arreglado con el Chiqui: tiene la ultima prueba y esta fijo,
+// custodiando el expediente. El Pelado Bicampeon lo defiende persiguiendote por
+// el laberinto como un fantasma de Pac-Man.
+object diMaria {
+  var property position = game.at(10, 10)   // fijo, arriba-centro de la cancha
+  var property image = "img/DiMariaUno.png"
+  var enUno = true
+
+  // Alterna entre los dos sprites para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) { image = "img/DiMariaUno.png" } else { image = "img/DiMariaDOS.png" }
+  }
+}
+
+object pelado {
+  var property position = game.at(10, 8)
+  var property image = "img/peladoUNO.png"
+  var enUno = true
+
+  method reset() {
+   position = game.at(10, 8)
+    }   // arranca arriba, defendiendo a Di Maria
+
+  // Alterna entre los dos sprites para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) { 
+    image = "img/peladoUNO.png" 
+    } else {
+     image = "img/peladoDOS.png" 
+     }
+  }
+
 }
 
 // Archivero (cajón): se revisa al pararte encima. Adentro puede haber un expediente.
@@ -79,39 +120,37 @@ class Archivero {
   }
 }
 
-// ---------- Minijuego 4: Chiqui Mafia y Proyectiles ----------
+// ---------- Minijuego 5: Chiqui Mafia ----------
 
 object chiqui {
-  var property position = game.at(9, 10)
-  var property image = "img/Chiqui.png"
-  var property vidas = 5
+  var property position = game.at(10, 10)
+  var property image = "img/chiqui_tapia_frame_1_64x64.png"
+  var enUno = true
 
   method reset() {
-    vidas = 5
-    position = game.at(9, 10)
+    position = game.at(10, 10)
+  }
+ 
+  // Alterna entre los dos frames para simular movimiento.
+  method animar() {
+    enUno = not enUno
+    if (enUno) {
+      image = "img/chiqui_tapia_frame_1_64x64.png"
+    } else {
+      image = "img/chiqui_tapia_frame_2_64x64.png"
+    }
   }
 
-  method perderVida() {
-    vidas -= 1
-  }
-
-  method estaDerrotado() = vidas <= 0
-}
-
-class Choripan {
-  var property position
-  const property image = "img/Chori.png"
-
-  method moverAbajo() {
-    position = position.down(1)
-  }
-}
-
-class Denuncia {
-  var property position
-  const property image = "img/Denuncia.png"
-
-  method moverArriba() {
-    position = position.up(1)
+  // Da un paso acercándose hacia una posición objetivo (primero en X, luego en Y).
+  method acercarseA(objetivo) {
+    if (position.x() < objetivo.x()) {
+      position = position.right(1)
+    } else if (position.x() > objetivo.x()) {
+      position = position.left(1)
+    } else if (position.y() < objetivo.y()) {
+      position = position.up(1)
+    } else if (position.y() > objetivo.y()) {
+      position = position.down(1)
+    }
   }
 }

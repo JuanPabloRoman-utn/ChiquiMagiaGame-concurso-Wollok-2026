@@ -54,11 +54,12 @@ object salaPrincipal inherits Sala {
   override method fondo() = "img/FondoAFA.png"
   override method posicionInicial() = game.at(9, 2)   // abajo, sobre la alfombra
 
-  // Progresión: Toviggino (puerta x=7) -> Beligoy (puerta x=12) -> Chiqui (puerta central x=9).
+  // Progresión: Toviggino (x=7) -> Beligoy (x=12) -> Pelado (x=9). El Chiqui NO es
+  // puerta del menú: se llega desde la pantalla de juicio final (tras ganar el Pelado).
   override method salidas() =
     if (not minijuegoToviggino.completado()) [ new Salida(x = 7, y = 8, destino = salaToviggino) ]
     else if (not minijuegoBeligoy.completado()) [ new Salida(x = 12, y = 8, destino = salaBeligoy) ]
-    else if (not minijuegoChiqui.completado()) [ new Salida(x = 9, y = 8, destino = salaChiqui) ]
+    else if (not minijuegoPelado.completado()) [ new Salida(x = 9, y = 8, destino = salaPelado) ]
     else []
 
   // Vitrinas de las paredes laterales (x1, x18) y pared del fondo con las puertas (y>=9).
@@ -87,7 +88,7 @@ object salaPatio inherits Sala {
 
 // Minijuego 1 - Toviggino. Entrás abajo (al lado de la puerta) y subís al escritorio.
 object salaToviggino inherits SalaMinijuego {
-  override method fondo() = "img/SalaToviggino.png"
+  override method fondo() = "img/salaTovi.png"
   override method imagenInstrucciones() = "img/InstruccionesToviggino.png"
   override method posicionInicial() = game.at(10, 2)
   override method salidas() = [ new Salida(x = 10, y = 1, destino = salaPrincipal) ]
@@ -119,22 +120,31 @@ object salaBeligoy inherits SalaMinijuego {
   override method jugadorSeMovio(pos) { minijuegoBeligoy.jugadorSeMovio(pos) }
 }
 
-// Minijuego 4 - Chiqui Mafia (Prueba Final).
+// Minijuego final - Chiqui Mafia (el juicio final).
 object salaChiqui inherits SalaMinijuego {
-  override method fondo() = "img/FondoAFA_tmp.png"
+  override method fondo() = "img/fondoJuicio.png"
   override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
   override method posicionInicial() = game.at(10, 1)   // Abajo al centro
   override method salidas() = []
   override method alEntrar() { minijuegoChiqui.iniciar() }
   override method alSalir() { minijuegoChiqui.terminar() }
   override method jugadorSeMovio(pos) { minijuegoChiqui.jugadorSeMovio(pos) }
-  override method realizarAccionEnSala() {minijuegoChiqui.dispararDenuncia()}
+}
+
+// Minijuego 4 - Pelado Bicampeon + Di Maria (persecucion en la cancha).
+object salaPelado inherits SalaMinijuego {
+  override method fondo() = "img/CanchaFutbol.png"   // cancha abierta
+  override method imagenInstrucciones() = "img/InstruccionesPelado.png"
+  override method posicionInicial() = game.at(1, 1)
+  override method salidas() = []   // se gana llegando a Di Maria
+  override method alEntrar() { minijuegoPelado.iniciar() }
+  override method alSalir() { minijuegoPelado.terminar() }
+  override method jugadorSeMovio(pos) { minijuegoPelado.jugadorSeMovio(pos) }
+  // Cancha con barrera: bordes + la fila-barrera con hueco central.
+  override method estaLibre(pos) = super(pos) and not minijuegoPelado.esBarrera(pos)
 }
 
 // ---------- Config / modo test ----------
-// Con debug = true se habilitan teclas para saltar a cualquier sala y marcar
-// minijuegos como completados (para no tener que jugarlos cada vez que pruebo).
-// IMPORTANTE: poner debug = false para la entrega final.
 object config {
   var property debug = true
 }
@@ -180,20 +190,29 @@ object director {
   var estado = estadoMenu   // "menu" | "jugando" | "cartel"
   const indicadores = []
 
+  // Muestra una secuencia de imágenes tipo slide; al terminar ejecuta 'alTerminar'.
+  method mostrarSlides(imagenes, alTerminar) {
+    self.mostrarPantalla(imagenes.first(), new EstadoSlide(
+      imagenes = imagenes,
+      indiceActual = 0,
+      alTerminar = alTerminar
+    ))
+  }
+
 
   method irA(sala){
     if (sala.tieneInstrucciones()) { self.mostrarInstrucciones(sala) }
     else { self.entrarA(sala) }
   }
 
-  method accionar(){
-    
-    salaActual.realizarAccionEnSala()
-  }
 
   method entrarA(sala) {
     estado = estadoJugando
     if (salaActual != null) { salaActual.alSalir() }
+    // OJO: no llamar limpiarTicks aca. iniciar() re-registra sus ticks en esta misma
+    // llamada y el motor rompe si se hace removeTickEvent + onTick del mismo nombre en
+    // el mismo frame (congela el minijuego). La limpieza se hace en mostrarPantalla
+    // (pantalla de instrucciones previa a cada minijuego), que si limpia lo acumulado.
     // Limpieza segura: copio la lista antes de borrar (no itero la lista viva).
     game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
     indicadores.clear()
@@ -224,15 +243,38 @@ object director {
     }
   }
 
+  // Cambia SOLO el fondo de la sala actual, sin reiniciar el minijuego.
+  // Redibuja fondo nuevo + salidas + jugador + HUD en el orden de capas correcto.
+  // Los sprites propios del minijuego (ej: toviggino) los re-agrega quien llama.
+  method cambiarFondo(nuevoFondo) {
+    game.allVisuals().map({ visual => visual }).forEach({ visual => game.removeVisual(visual) })
+    indicadores.clear()
+    game.addVisual(new Imagen(position = game.at(0,0), image = nuevoFondo))
+    salaActual.salidas().forEach({ unaSalida =>
+      const flecha = new Imagen(position = game.at(unaSalida.x(), unaSalida.y()), image = "img/FlechaVerde.png")
+      indicadores.add(flecha)
+      game.addVisual(flecha)
+    })
+    if (not game.hasVisual(jugador)) { game.addVisual(jugador) }
+    self.dibujarHud()
+  }
+
   method titilar() {
     indicadores.forEach({ indicador =>
       if (game.hasVisual(indicador)) game.removeVisual(indicador) else game.addVisual(indicador)
     })
   }
 
+  // Quita todos los ticks de minijuegos (defensa contra acumulacion al reentrar/reiniciar).
+  method limpiarTicks() {
+    ["tovGira", "tovTimer", "caruPatron", "beliTimer", "pelaPersigue",
+     "diMariaAnim", "peladoAnim", "chiquiMueve", "chiquiAnim"].forEach({ t => game.removeTickEvent(t) })
+  }
+
   // Limpia la pantalla y deja un fondo de pantalla completa (menú / cartel).
   method mostrarPantalla(imagen, nuevoEstado) {
     if (salaActual != null) { salaActual.alSalir() }
+    self.limpiarTicks()
     estado = nuevoEstado
     salaActual = null
     indicadores.clear()
@@ -246,13 +288,19 @@ object director {
   
   // Reiniciar vidas y progreso
   method reiniciarDatos(){
-    jugador.vidas(2)
-    jugador.pruebas(0)
+    jugador.reiniciarVidas()
+    jugador.reiniciarPruebas()
     minijuegoBeligoy.completado(false)
     minijuegoCaruso.completado(false)
     minijuegoToviggino.completado(false)
+    minijuegoPelado.completado(false)
     minijuegoChiqui.completado(false)
     minijuegoToviggino.posicionesDePruebasGeneradas(false)
+  }
+
+  // Pantalla "Conseguiste todas las pruebas, es hora del juicio final".
+  method mostrarJuicioFinal() {
+    self.mostrarPantalla("img/PantallaJuicioFinal.png", estadoJuicioFinal)
   }
 
   // Se llama al derrotar al Chiqui para mostrar la pantalla de juego ganado
@@ -273,8 +321,7 @@ object director {
     } 
   }
 
-  method perderVida() {
-    jugador.perderVida()
+  method decidirSegunVidasActuales() {
     if (jugador.seQuedoSinVidas()) {
       self.gameOver()          // te quedaste sin vidas: perdés el juego
     } else {
@@ -300,9 +347,43 @@ object director {
       minijuegoToviggino.completado(true)
       minijuegoBeligoy.completado(true)
       minijuegoCaruso.completado(true)
+      minijuegoPelado.completado(true)
       minijuegoChiqui.completado(true)
       self.irA(salaPrincipal)
       game.say(jugador, "[TEST] Todo completado")
+    }
+  }
+
+  // Atajo de test: saltar directo a la cancha del Pelado desde el menu limpio.
+  method irAlLaberinto() {
+    if (config.debug) {
+      self.reiniciarDatos()
+      self.irA(salaPelado)   // via instrucciones (el entrarA directo daba error)
+    }
+  }
+}
+
+// Pantalla de juicio final: ENTER entra directo al Chiqui.
+object estadoJuicioFinal inherits Estado {
+  // irA (no entrarA) para que muestre las instrucciones del Chiqui antes de jugar.
+  override method confirmar(){ director.irA(salaChiqui) }
+}
+
+class EstadoSlide inherits Estado {
+  const imagenes
+  const indiceActual
+  const alTerminar
+
+  override method confirmar() {
+    const siguiente = indiceActual + 1
+    if (siguiente < imagenes.size()) {
+      director.mostrarPantalla(imagenes.get(siguiente), new EstadoSlide(
+        imagenes = imagenes,
+        indiceActual = siguiente,
+        alTerminar = alTerminar
+      ))
+    } else {
+      alTerminar.apply()
     }
   }
 }

@@ -75,6 +75,17 @@ describe "minijuego Toviggino" {
     minijuegoToviggino.tick()
     assert.equals(1, jugador.vidas())
   }
+
+  test "las pruebas nunca aparecen sobre los personajes ni sobre la flecha de salida" {
+    (1 .. 100).forEach({ i =>
+      minijuegoToviggino.terminar()
+      minijuegoToviggino.posicionesDePruebasGeneradas(false)
+      minijuegoToviggino.iniciar()
+      game.allVisuals().filter({ visual => visual.image() == "img/Prueba.png" }).forEach({ visual =>
+        assert.notThat(visual.position().x() == 10 and [1, 2, 10].contains(visual.position().y()))
+      })
+    })
+  }
 }
 
 describe "minijuego Beligoy" {
@@ -153,5 +164,138 @@ describe "minijuego Caruso" {
     assert.that(minijuegoCaruso.completado())
     assert.equals(1, jugador.pruebas())
     assert.equals(salaPrincipal, director.salaActual())
+  }
+}
+
+//tests minijuego del peladin bichampion
+
+describe "minijuego Pelado" {
+
+  method initialize() {
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaPelado)
+  }
+
+  test "llegar hasta Di Maria completa el minijuego, suma prueba y pasa al juicio final" {
+    minijuegoPelado.jugadorSeMovio(diMaria.position())
+
+    assert.that(minijuegoPelado.completado())
+    assert.equals(1, jugador.pruebas())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "ser atrapado por el Pelado con vidas restantes resta una vida y reintenta la sala" {
+    pelado.position(game.at(5, 5))
+    minijuegoPelado.jugadorSeMovio(game.at(5, 5))
+
+    assert.equals(1, jugador.vidas())
+    assert.equals(salaPelado, director.salaActual())
+  }
+
+  test "ser atrapado por el Pelado sin vidas dispara game over y reinicia el progreso" {
+    minijuegoToviggino.completado(true)
+    jugador.vidas(1)
+    pelado.position(game.at(5, 5))
+
+    minijuegoPelado.jugadorSeMovio(game.at(5, 5))
+
+    assert.equals(2, jugador.vidas())
+    assert.equals(0, jugador.pruebas())
+    assert.notThat(minijuegoToviggino.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "el Pelado se acerca al jugador en su movimiento" {
+    pelado.position(game.at(8, 8))
+    jugador.position(game.at(4, 4))
+    const distanciaInicial = minijuegoPelado.dist(pelado.position(), jugador.position())
+
+    minijuegoPelado.moverPelado()
+
+    const distanciaNueva = minijuegoPelado.dist(pelado.position(), jugador.position())
+    assert.that(distanciaNueva < distanciaInicial)
+  }
+
+  test "las celdas con pozos trampa son reconocidas como barrera" {
+    assert.that(minijuegoPelado.esBarrera(game.at(1, 5)))
+    assert.notThat(salaPelado.estaLibre(game.at(1, 5)))
+  }
+}
+
+//tests minujuego del chiqui
+describe "minijuego Chiqui" {
+
+  method initialize() {
+    game.width(20)
+    game.height(12)
+    game.cellSize(64)
+    director.irA(salaChiqui)
+  }
+
+  method posicionPruebaActual() =
+    game.allVisuals().find({ visual => visual.image() == "img/Prueba.png" }).position()
+
+  test "agarrar una prueba suma progreso y genera una nueva prueba" {
+    const posPrueba = self.posicionPruebaActual()
+    minijuegoChiqui.jugadorSeMovio(posPrueba)
+
+    assert.equals(game.at(posPrueba.x(), posPrueba.y()), jugador.position())
+    assert.notThat(minijuegoChiqui.completado())
+    assert.equals(posPrueba, jugador.position())
+  }
+
+  test "agarrar 5 pruebas completa el minijuego y lleva a la pantalla de victoria" {
+    (1 .. 5).forEach({ i =>
+      const posPrueba = self.posicionPruebaActual()
+      jugador.position(posPrueba)
+      minijuegoChiqui.jugadorSeMovio(posPrueba)
+    })
+
+    assert.that(minijuegoChiqui.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "si el Chiqui agarra 2 pruebas se dispara game over y se reinician los datos" {
+    minijuegoToviggino.completado(true)
+    jugador.pruebas(1)
+
+    (1 .. 2).forEach({ i =>
+      const posPrueba = self.posicionPruebaActual()
+      chiqui.position(posPrueba)
+      minijuegoChiqui.turnoChiqui()
+    })
+
+    assert.equals(0, jugador.pruebas())
+    assert.equals(2, jugador.vidas())
+    assert.notThat(minijuegoToviggino.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "tocar al Chiqui hace perder automaticamente y reinicia el juego" {
+    minijuegoCaruso.completado(true)
+    jugador.pruebas(1)
+    chiqui.position(game.at(8, 8))
+
+    minijuegoChiqui.jugadorSeMovio(game.at(8, 8))
+
+    assert.equals(0, jugador.pruebas())
+    assert.equals(2, jugador.vidas())
+    assert.notThat(minijuegoCaruso.completado())
+    assert.equals(null, director.salaActual())
+  }
+
+  test "el Chiqui se acerca paso a paso hacia la prueba actual" {
+    const posPrueba = self.posicionPruebaActual()
+    chiqui.position(game.at(2, 2))
+    const distanciaInicial = (chiqui.position().x() - posPrueba.x()).abs() +
+                             (chiqui.position().y() - posPrueba.y()).abs()
+
+    minijuegoChiqui.turnoChiqui()
+
+    const distanciaNueva = (chiqui.position().x() - posPrueba.x()).abs() +
+                           (chiqui.position().y() - posPrueba.y()).abs()
+    assert.that(distanciaNueva < distanciaInicial)
   }
 }

@@ -9,7 +9,8 @@ program juego {
   game.width(20)
   game.height(12)
 
-  // Arranca en el menú principal. ENTER avanza (menú -> patio, cartel -> hall).
+  // Arranca mostrando el MENU. ENTER avanza por el flujo normal.
+  director.reiniciarDatos()
   director.mostrarMenu()
   keyboard.enter().onPressDo({ director.confirmar() })
 
@@ -18,17 +19,14 @@ program juego {
   keyboard.s().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.down(1) }) })
   keyboard.a().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.left(1) }) })
   keyboard.d().onPressDo({ jugador.mirar(false) director.moverJugador({ pos => pos.right(1) }) })
-
-  // --- Mecánica de Disparo (Minijuego Chiqui) ---
-  keyboard.space().onPressDo({
-    director.accionar()
-  })
+  
 
   // --- Teclas de modo test (solo sirven si config.debug = true) ---
   // T/B/C/K: saltar directo a Toviggino / Beligoy / Caruso / Chiqui. U: completar todo y volver al hall.
   keyboard.t().onPressDo({ director.saltarA(salaToviggino) })
   keyboard.b().onPressDo({ director.saltarA(salaBeligoy) })
   keyboard.c().onPressDo({ director.saltarA(salaCaruso) })
+  keyboard.l().onPressDo({ director.irAlLaberinto() })
   keyboard.k().onPressDo({ director.saltarA(salaChiqui) })
   keyboard.u().onPressDo({ director.completarTodo() })
 
