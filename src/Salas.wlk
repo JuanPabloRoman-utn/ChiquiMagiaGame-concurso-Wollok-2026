@@ -329,13 +329,9 @@ object director {
 
   method moverJugador(movimiento) {
     if (estado.permiteMover() and salaActual != null) {
-      const destino = movimiento.apply(jugador.position())
-      if (salaActual.estaLibre(destino)) {
-        jugador.position(destino)
-        salaActual.jugadorSeMovio(destino)
-      }
-    } 
-  }
+        jugador.moverse(movimiento, salaActual)
+    }
+}
 
   method decidirSegunVidasActuales() {
     if (jugador.seQuedoSinVidas()) {

@@ -62,14 +62,23 @@ object minijuegoToviggino {
   method terminar() {
     game.removeTickEvent("tovGira")
     game.removeTickEvent("tovTimer")
-    if (sonidoEscape != null) { sonidoEscape.stop() }
+    if (sonidoEscape != null) { 
+      sonidoEscape.stop()
+      sonidoEscape = null 
+    }
     pruebas.forEach({ prueba => if (game.hasVisual(prueba)) game.removeVisual(prueba) })
+
+    pruebas = []
+    pruebasAgarradas = 0
+    posicionesDePruebasGeneradas = false
+    escapando = false
+    segundos = 0 
   }
 
   method jugadorSeMovio(pos) {
     if (toviggino.estaMirando()) {
       jugador.perderVida()
-      director.irA(salaPrincipal)          // te vio moverte
+      director.decidirSegunVidasActuales()          // te vio moverte
     } else {
       self.chequearPruebas(pos)
       self.chequearSalida(pos)

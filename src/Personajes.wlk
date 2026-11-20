@@ -24,6 +24,15 @@ object jugador {
   method vidas() = vidas
   method pruebas() = pruebas
   method conseguirPrueba() {pruebas += 1}
+
+
+  method moverse(movimiento, sala) {
+    const destino = movimiento.apply(position)
+    if (sala.estaLibre(destino)) {
+            position = destino
+            sala.jugadorSeMovio(destino)
+        }
+  }
   
 }
 
