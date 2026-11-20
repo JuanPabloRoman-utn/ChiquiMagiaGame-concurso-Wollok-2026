@@ -68,8 +68,8 @@ object minijuegoToviggino {
 
   method jugadorSeMovio(pos) {
     if (toviggino.estaMirando()) {
-      jugador.perderVida()          // te vio moverte
-      director.decidirSegunVidasActuales()
+      jugador.perderVida()
+      director.irA(salaPrincipal)          // te vio moverte
     } else {
       self.chequearPruebas(pos)
       self.chequearSalida(pos)
@@ -125,7 +125,6 @@ object minijuegoToviggino {
     segundos = segundos - 1
     if (segundos <= 0) {
       jugador.perderVida()          // se acabó el tiempo
-      director.decidirSegunVidasActuales()
     } else {
       game.say(jugador, segundos.toString() + "s")
     }
@@ -271,8 +270,7 @@ object minijuegoBeligoy {
   method tick() {
     segundos = segundos - 1
     if (segundos <= 0) {
-      jugador.perderVida()   
-      director.decidirSegunVidasActuales()       // volvió Beligoy: se acabó el tiempo
+      jugador.perderVida()          // volvió Beligoy: se acabó el tiempo
     } else {
       game.say(jugador, segundos.toString() + "s")
     }
@@ -358,7 +356,7 @@ object minijuegoPelado {
 
   method mismaCelda(a, b) = a.x() == b.x() and a.y() == b.y()
 
-  // El Pelado da un paso hacia el jugador por la casilla libre mas cercana (greedy,  
+  // El Pelado da un paso hacia el jugador por la casilla libre mas cercana (greedy,
   // O(1) por tick). Barato: no satura el loop del juego como el BFS.
   method moverPelado() {
     // Solo actua si seguis en la cancha (evita ticks residuales al salir).
@@ -386,17 +384,15 @@ object minijuegoPelado {
     }
   }
 
- method atrapado() {
+  method atrapado() {
     game.say(jugador, "Te agarro el Pelado!")
     jugador.perderVida()
-    if (jugador.seQuedoSinVidas()) {
+    if (jugador.vidas() <= 0) {
       director.gameOver()          // sin vidas: perdiste el juego
     } else {
       director.entrarA(salaPelado) // todavia tenes vidas: reintentas el Pelado
     }
   }
-  
-
 
   method jugadorSeMovio(pos) {
     if (pos.x() == diMaria.position().x() and pos.y() == diMaria.position().y()) {
@@ -489,7 +485,7 @@ object minijuegoChiqui {
   // Cada vez que se mueve el jugador, revisamos choque o si agarró la prueba.
   method jugadorSeMovio(pos) {
     self.chequearChoque()
-    if (pruebaActual != null and self.mismaCelda(pos, pruebaActual.position())) {
+    if (director.salaActual() == salaChiqui and pruebaActual != null and self.mismaCelda(pos, pruebaActual.position())) {
       self.jugadorAgarroPrueba()
     }
   }
@@ -506,7 +502,6 @@ object minijuegoChiqui {
     if (pruebasJugador >= pruebasParaGanar) {
       self.ganar()
     } else {
-      game.sound("sounds/agarrarPrueba.mp3").play()   // sonido al agarrar una prueba
       game.say(jugador, "Prueba " + pruebasJugador.toString() + "/" + pruebasParaGanar.toString() + "!")
       self.generarNuevaPrueba()
     }
