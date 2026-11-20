@@ -152,6 +152,7 @@ class Estado {
 object estadoMenu inherits Estado {
   override method confirmar(){
     director.reiniciarDatos()
+    director.iniciarMusica()   // arranca la musica de fondo apenas empezas a jugar
     director.irA(salaPatio)
   }
 }
@@ -182,6 +183,26 @@ object director {
   var property salaActual = null
   var estado = estadoMenu   // "menu" | "jugando" | "cartel"
   const indicadores = []
+  var musica = null   // musica de fondo (loop) mientras se juega
+
+  // Arranca la musica de fondo en loop. Se llama al empezar la partida (ENTER en el
+  // menu, que ademas cuenta como gesto del usuario para que el navegador la deje sonar).
+  method iniciarMusica() {
+    if (musica == null) {
+      musica = game.sound("sounds/fondoMusica.mp3")
+      musica.shouldLoop(true)
+      musica.volume(0.08)   // 0 = mudo, 1 = maximo. Bien bajo, solo de ambiente.
+      musica.play()
+    }
+  }
+
+  // Corta la musica de fondo (al ganar o perder el juego).
+  method detenerMusica() {
+    if (musica != null) {
+      musica.stop()
+      musica = null
+    }
+  }
 
   // Muestra una secuencia de imágenes tipo slide; al terminar ejecuta 'alTerminar'.
   method mostrarSlides(imagenes, alTerminar) {
@@ -298,6 +319,7 @@ object director {
 
   // Se llama al derrotar al Chiqui para mostrar la pantalla de juego ganado
   method completarJuego() {
+    self.detenerMusica()   // corto la musica de fondo antes del sonido de ganar
     self.mostrarPantalla("img/PantallaGanador.png", estadoVictoria)
     game.sound("sounds/sonidoGanar.mp3").play()   // sonido de ganar el juego
   }
@@ -325,6 +347,7 @@ object director {
 
   // Game Over: reinicia el juego completo (vidas, inventario, progreso).
   method gameOver() {
+    self.detenerMusica()   // corto la musica de fondo antes de la trompeta de perder
     self.reiniciarDatos()
     self.mostrarPantalla("img/Pantalla_Perdida.jpg", estadoPerdido)
     game.sound("sounds/sonidoPerder.mp3").play()   // trompeta de perder el juego
