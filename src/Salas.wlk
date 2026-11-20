@@ -120,7 +120,7 @@ object salaBeligoy inherits SalaMinijuego(minijuego = minijuegoBeligoy) {
 
 // Minijuego final - Chiqui Mafia (el juicio final).
 object salaChiqui inherits SalaMinijuego(minijuego = minijuegoChiqui) {
-  override method fondo() = "img/FondoAFA_tmp.png"
+  override method fondo() = "img/fondoJuicio.png"
   override method imagenInstrucciones() = "img/InstruccionesChiqui.png"
   override method posicionInicial() = game.at(10, 1)   // Abajo al centro
   override method salidas() = []
@@ -299,6 +299,7 @@ object director {
   // Se llama al derrotar al Chiqui para mostrar la pantalla de juego ganado
   method completarJuego() {
     self.mostrarPantalla("img/PantallaGanador.png", estadoVictoria)
+    game.sound("sounds/sonidoGanar.mp3").play()   // sonido de ganar el juego
   }
 
   // ENTER: avanza según en qué pantalla estés.
@@ -326,6 +327,7 @@ object director {
   method gameOver() {
     self.reiniciarDatos()
     self.mostrarPantalla("img/Pantalla_Perdida.jpg", estadoPerdido)
+    game.sound("sounds/sonidoPerder.mp3").play()   // trompeta de perder el juego
   }
 
   // ----- Modo test (solo si config.debug) -----

@@ -506,6 +506,7 @@ object minijuegoChiqui {
     if (pruebasJugador >= pruebasParaGanar) {
       self.ganar()
     } else {
+      game.sound("sounds/agarrarPrueba.mp3").play()   // sonido al agarrar una prueba
       game.say(jugador, "Prueba " + pruebasJugador.toString() + "/" + pruebasParaGanar.toString() + "!")
       self.generarNuevaPrueba()
     }
