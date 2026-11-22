@@ -1,29 +1,41 @@
-# Chiqui Mafia Game
+# Chiqui Magia Game
 
-Juego con Wollok Game — TP Paradigmas de Programación (UTN) · Equipo LosDelFondo.
+Videojuego 2D desarrollado en **Wollok Game** para la materia *Paradigmas de Programación* y presentado para el concurso de Wollok. Encarnás al detective **Lucho**, que investiga irregularidades en el fútbol y debe reunir pruebas a través de distintos minijuegos antes de llegar al juicio final.
 
-## Cómo correr
+![Pantalla principal del juego](img/FondoMenu.png)
 
-```
-wollok run src.Juego.juego --port 4200
-```
+## Participantes
 
-Luego abrir `http://localhost:4200`. Para moverse: clic en el tablero + **W A S D** (una casilla por tecla).
+* **[Nehuel Melo]**
+* **[Augusto Yañez]**
+* **[Juan Pablo Román]**
+* **[Carlos Tolosa]**
 
-## Convenciones del motor (base para todos los tableros / salas)
+## Institución
 
-Sistema de **tiles**: todo se alinea a una grilla. Esta es la base para construir las salas del juego sobre las mismas dimensiones.
+* **Universidad Tecnológica Nacional – Facultad Regional Buenos Aires (UTN FRBA)**
+* **Asignatura:** Paradigmas de Programación (2026)
 
-- **Casilla (`cellSize`): 64 px.** 1 casilla = 1 baldosa = 1 movimiento. Siempre alineado.
-- **Tablero estándar: 20 × 12 casillas** (= 1280 × 768 px).
-- **Piso:** `game.ground("img/PisoAFA.png")` — una baldosa de 64×64 que se repite en cada casilla (grilla uniforme y pareja). NO usar una sola imagen grande estirada (`boardGround`): deforma y descuadra la grilla.
-- **Sprites:** PNG de **64×64**, **fondo transparente**, personaje centrado. Los originales en alta resolución van en `assets/img/hd/`.
-- **Movimiento:** casilla por casilla; el método `moverA` chequea los límites del tablero → **paredes invisibles** en el borde (no te salís).
-- **Decoración / paredes / muebles:** se agregan como **objetos (visuales) sobre casillas** (estilo tilemap), no como una foto de fondo. Así todo queda alineado a la grilla.
-- **Assets:** viven en `assets/` (declarado por `resourceFolder: "assets"` en `package.json`) y se referencian con su ruta relativa, respetando mayúsculas: `"img/Nombre.png"`.
+## Reglas del juego
 
-## Estructura
+* Empezás la partida con **2 vidas** y **0 pruebas**. Si perdés todas las vidas o fallás las condiciones límite de los minijuegos finales, se activa el *Game Over* y se reinicia el progreso.
+* Desde el menú inicial avanzás con `ENTER` al patio y luego al hall principal (`salaPrincipal`), donde se van habilitando los desafíos de forma progresiva:
+  1. **Torbellino:** recolectá las **3 pruebas** sin que te vea moverte cuando se da vuelta, y salí antes de que se agoten los **12 segundos** de escape.
+  2. **Caruso:** memorizá el camino seguro hasta la celda (`(10, 10)`) antes de que se oculten las marcas y llegá sin pisar fuera del recorrido.
+  3. **Archiveros:** encontrá **3 expedientes** en los archiveros antes de que se acabe el tiempo (**30 segundos**). Revisar un archivero limpio resta tiempo.
+  4. **Pelado Bicampeón + El fideo:** esquivá al rival por la cancha evitando los pozos trampa hasta llegar a **El fideo** y conseguir la prueba que lleva a las pantallas de historia y al juicio final.
+  5. **Juicio final:** conseguí **5 pruebas** antes de que el rival destruya **2** o te toque.
 
-- `src/Juego.wpgm` — programa principal (tablero, piso, controles).
-- `src/Personajes.wlk` — objetos del dominio (por ahora `jugador`).
-- `assets/img/` — imágenes del juego (sprites 64×64, baldosas). `assets/img/hd/` guarda los originales HD.
+## Forma de uso
+
+* **Desde VS Code:** abrí el proyecto con la extensión de **Wollok** instalada y ejecutá `juego.wpgm` (tablero de `20x12` casillas de `64x64` px).
+* **Desde consola:** corré el programa principal en el puerto que uses (por ejemplo `wollok run ... --port 4200`) y abrí `http://localhost:4200` en el navegador.
+* **Controles:**
+  * `ENTER`: confirmar / avanzar en menús, carteles de introducción, instrucciones e historias.
+  * `W`, `A`, `S`, `D`: mover a Lucho casilla por casilla (`W` cambia el sprite a vista de espaldas; `A`, `S`, `D` a vista de frente).
+
+## Información adicional
+
+* **Arquitectura:** el código está organizado en `juego.wpgm` (punto de entrada y bindings de teclado/ticks), `Salas.wlk` (jerarquía `Sala` / `SalaMinijuego`, estados del juego mediante `Estado` y coordinación en `director`), `Personajes.wlk` (entidades, sprites y comportamientos) y `Minijuegos.wlk` (lógica específica de cada minijuego).
+* **Modo test (`config.debug`):** el proyecto incluye atajos de teclado (`T`, `B`, `C`, `L`, `K`, `U`) en `juego.wpgm` pensados para pruebas rápidas durante el desarrollo.
+* **Assets:** las carpetas `img/` y `sounds/` mantienen sus rutas relativas utilizadas en el código.
