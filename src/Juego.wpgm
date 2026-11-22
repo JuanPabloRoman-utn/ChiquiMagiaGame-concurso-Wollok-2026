@@ -4,7 +4,7 @@ import Salas.*
 import Minijuegos.*
 
 program juego {
-  game.title("Chiqui Mafia Game")
+  game.title("Chiqui Magia Game")
   game.cellSize(64)
   game.width(20)
   game.height(12)

@@ -13,7 +13,7 @@ describe "vidas y game over" {
 
   test "perder una vida con vidas restantes te devuelve a la sala principal" {
     director.irA(salaToviggino)
-    director.perderVida()
+    jugador.perderVida()
     assert.equals(1, jugador.vidas())
     assert.equals(salaPrincipal, director.salaActual())
   }
@@ -22,9 +22,10 @@ describe "vidas y game over" {
     minijuegoToviggino.completado(true)
     minijuegoCaruso.completado(true)
     minijuegoBeligoy.completado(true)
-    jugador.pruebas(2)
-    jugador.vidas(1)
-    director.perderVida()
+    jugador.conseguirPrueba()
+    jugador.conseguirPrueba()
+    jugador.perderVida()
+    director.decidirSegunVidasActuales()
     assert.equals(0, jugador.pruebas())
     assert.equals(2, jugador.vidas())
     assert.notThat(minijuegoToviggino.completado())
@@ -196,7 +197,7 @@ describe "minijuego Pelado" {
 
   test "ser atrapado por el Pelado sin vidas dispara game over y reinicia el progreso" {
     minijuegoToviggino.completado(true)
-    jugador.vidas(1)
+    jugador.perderVida()
     pelado.position(game.at(5, 5))
 
     minijuegoPelado.jugadorSeMovio(game.at(5, 5))
@@ -259,7 +260,7 @@ describe "minijuego Chiqui" {
 
   test "si el Chiqui agarra 2 pruebas se dispara game over y se reinician los datos" {
     minijuegoToviggino.completado(true)
-    jugador.pruebas(1)
+    jugador.conseguirPrueba()
 
     (1 .. 2).forEach({ i =>
       const posPrueba = self.posicionPruebaActual()
@@ -275,7 +276,7 @@ describe "minijuego Chiqui" {
 
   test "tocar al Chiqui hace perder automaticamente y reinicia el juego" {
     minijuegoCaruso.completado(true)
-    jugador.pruebas(1)
+    jugador.conseguirPrueba()
     chiqui.position(game.at(8, 8))
 
     minijuegoChiqui.jugadorSeMovio(game.at(8, 8))

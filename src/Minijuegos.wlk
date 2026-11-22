@@ -3,7 +3,7 @@ import Personajes.*
 import Salas.*
 
 
-// ---------- Minijuego 1: Toviggino ----------
+// ---------- Minijuego 1: Torbellino ----------
 object minijuegoToviggino {
   const pruebasTotales = 3
   var pruebasAgarradas = 0
